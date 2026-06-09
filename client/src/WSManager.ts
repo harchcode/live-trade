@@ -13,6 +13,8 @@ export class WSManager {
   // Pub/Sub listeners: Map<SymbolID, Set<Callback>>
   private listeners = new Map<number, Set<TradeSubscriber>>();
 
+  public totalBytesReceived = 0;
+
   constructor(url: string) {
     this.url = url;
     this.connect();
@@ -38,6 +40,7 @@ export class WSManager {
 
       if (event.data instanceof ArrayBuffer) {
         const buffer = event.data;
+        this.totalBytesReceived += buffer.byteLength;
 
         // Check if it's a manual Pong (1 byte, Action = 3)
         if (buffer.byteLength === 1) {

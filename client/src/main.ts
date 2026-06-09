@@ -2,7 +2,7 @@ import "./style.css";
 import { WSManager } from "./WSManager";
 import { Engine } from "./Engine";
 import { Widget } from "./Widget";
-import type { Trade } from "./types";
+import type { Trade, TradeSubscriber } from "./types";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative; background: #0a0a0c;">
@@ -21,6 +21,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; background: rgba(30, 30, 35, 0.85); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);">
       <div id="fps-counter" style="color: #00e676; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
       <div id="mem-counter" style="color: #8b8b9e; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Mem: -- MB</div>
+      <div id="data-counter" style="color: #8b8b9e; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Data: 0 KB</div>
     </div>
 
     <!-- Dropdowns (Hidden by default) -->
@@ -38,11 +39,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
 const wsManager = new WSManager("ws://localhost:8080");
 const engine = new Engine("main-canvas", "ui-layer");
+engine.setWSManager(wsManager);
 
 const addWidgetBtn = document.getElementById("add-widget-btn")!;
 const widgetCounter = document.getElementById("widget-counter")!;
 const symbolDropdown = document.getElementById("symbol-dropdown")!;
 const filterDropdown = document.getElementById("filter-dropdown")!;
+
+const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
 // Generate 100 symbols for the dropdown to match the server mock
 const baseCoins = [
@@ -81,10 +85,11 @@ addWidgetBtn.addEventListener("click", () => {
   const w = new Widget(defaultSymbolId, x, y);
 
   // Create a bound trade handler attached to the widget so we can unsubscribe correctly later
-  (w as any)._tradeHandler = (trade: Trade) => w.addTrade(trade);
+  const handler = (trade: Trade) => w.addTrade(trade);
+  widgetHandlers.set(w, handler);
 
   engine.addWidget(w);
-  wsManager.subscribe(w.symbolId, (w as any)._tradeHandler);
+  wsManager.subscribe(w.symbolId, handler);
 
   widgetCounter.innerText = `${engine.getWidgets().length} / 50 Widgets`;
 });
@@ -121,19 +126,19 @@ symbolDropdown.addEventListener("mousedown", e => {
     const newId = parseInt(target.getAttribute("data-id")!, 10);
 
     if (activeTargetWidget.symbolId !== newId) {
-      // Unsubscribe old
-      wsManager.unsubscribe(
-        activeTargetWidget.symbolId,
-        (activeTargetWidget as any)._tradeHandler
-      );
+      const oldHandler = widgetHandlers.get(activeTargetWidget);
+      if (oldHandler) {
+        // Unsubscribe old
+        wsManager.unsubscribe(activeTargetWidget.symbolId, oldHandler);
 
-      // Clear trades & scroll to top
-      activeTargetWidget.trades = [];
-      activeTargetWidget.scrollY = 0;
+        // Clear trades & scroll to top
+        activeTargetWidget.trades = [];
+        activeTargetWidget.scrollY = 0;
 
-      // Subscribe new
-      activeTargetWidget.symbolId = newId;
-      wsManager.subscribe(newId, (activeTargetWidget as any)._tradeHandler);
+        // Subscribe new
+        activeTargetWidget.symbolId = newId;
+        wsManager.subscribe(newId, oldHandler);
+      }
     }
     symbolDropdown.style.display = "none";
   }

@@ -1,4 +1,5 @@
 import { Widget } from "./Widget";
+import type { WSManager } from "./WSManager";
 
 export class Engine {
   private canvas: HTMLCanvasElement;
@@ -22,6 +23,8 @@ export class Engine {
   private fps = 0;
   private fpsEl: HTMLElement | null = null;
   private memEl: HTMLElement | null = null;
+  private dataEl: HTMLElement | null = null;
+  private wsManager: WSManager | null = null;
 
   // DOM Overlays
   private uiLayer: HTMLDivElement;
@@ -38,6 +41,7 @@ export class Engine {
 
     this.fpsEl = document.getElementById("fps-counter");
     this.memEl = document.getElementById("mem-counter");
+    this.dataEl = document.getElementById("data-counter");
 
     this.resize();
     window.addEventListener("resize", () => this.resize());
@@ -47,6 +51,10 @@ export class Engine {
     window.addEventListener("mouseup", this.onMouseUp);
 
     this.loop();
+  }
+
+  public setWSManager(manager: WSManager) {
+    this.wsManager = manager;
   }
 
   private resize() {
@@ -273,10 +281,21 @@ export class Engine {
           this.fps >= 50 ? "#00e676" : this.fps >= 30 ? "#ffb300" : "#ff1744";
       }
 
-      if (this.memEl && (performance as any).memory) {
-        const memory = (performance as any).memory;
-        const mb = (memory.usedJSHeapSize / 1048576).toFixed(1);
+      const perf = performance as Performance & { memory?: { usedJSHeapSize: number } };
+      if (this.memEl && perf.memory) {
+        const mb = (perf.memory.usedJSHeapSize / 1048576).toFixed(1);
         this.memEl.innerText = `Mem: ${mb} MB`;
+      }
+
+      if (this.dataEl && this.wsManager) {
+        const bytes = this.wsManager.totalBytesReceived;
+        if (bytes > 1048576) {
+           const mb = (bytes / 1048576).toFixed(2);
+           this.dataEl.innerText = `Data: ${mb} MB`;
+        } else {
+           const kb = (bytes / 1024).toFixed(1);
+           this.dataEl.innerText = `Data: ${kb} KB`;
+        }
       }
     }
 
