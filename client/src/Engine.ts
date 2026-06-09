@@ -13,13 +13,22 @@ export class Engine {
   private dragOffsetX = 0;
   private dragOffsetY = 0;
 
-  constructor(canvasId: string) {
+  // DOM Overlays
+  private uiLayer: HTMLDivElement;
+  private scrollOverlays = new Map<Widget, HTMLDivElement>();
+
+  // Callbacks
+  public onSymbolClick?: (widget: Widget, x: number, y: number) => void;
+  public onFilterClick?: (widget: Widget, x: number, y: number) => void;
+
+  constructor(canvasId: string, uiLayerId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    this.uiLayer = document.getElementById(uiLayerId) as HTMLDivElement;
     this.ctx = this.canvas.getContext('2d')!;
+    
     this.resize();
     window.addEventListener('resize', () => this.resize());
     
-    // Bind event listeners for interaction
     this.canvas.addEventListener('mousedown', this.onMouseDown);
     window.addEventListener('mousemove', this.onMouseMove);
     window.addEventListener('mouseup', this.onMouseUp);
@@ -38,14 +47,76 @@ export class Engine {
     this.canvas.height = rect.height * this.dpr;
 
     this.ctx.scale(this.dpr, this.dpr);
+    this.showAllScrollOverlays(); // Update positions on resize
   }
 
   public addWidget(widget: Widget) {
     this.widgets.push(widget);
+    this.createScrollOverlay(widget);
+  }
+
+  public removeWidget(widget: Widget) {
+    const idx = this.widgets.indexOf(widget);
+    if (idx > -1) {
+      this.widgets.splice(idx, 1);
+      const div = this.scrollOverlays.get(widget);
+      if (div) {
+        div.remove();
+        this.scrollOverlays.delete(widget);
+      }
+    }
   }
 
   public getWidgets() {
     return this.widgets;
+  }
+
+  // --- DOM SCROLL OVERLAYS ---
+
+  private createScrollOverlay(widget: Widget) {
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.overflowY = 'auto';
+    div.style.overflowX = 'hidden';
+    div.style.pointerEvents = 'auto'; // allow scrolling interaction
+    
+    // Webkit specific styling to hide scrollbars until hover (or style natively)
+    div.className = 'widget-scroll-overlay';
+
+    // A tall transparent div to force scrolling logic
+    // 100 max trades * 24px row height + some padding
+    const content = document.createElement('div');
+    content.style.width = '100%';
+    content.style.height = '2450px'; 
+    div.appendChild(content);
+
+    div.addEventListener('scroll', () => {
+      widget.scrollY = div.scrollTop;
+    });
+
+    this.uiLayer.appendChild(div);
+    this.scrollOverlays.set(widget, div);
+    this.positionScrollOverlay(widget, div);
+  }
+
+  private positionScrollOverlay(widget: Widget, div: HTMLDivElement) {
+    const headerHeight = 44;
+    div.style.left = `${widget.x}px`;
+    div.style.top = `${widget.y + headerHeight}px`;
+    div.style.width = `${widget.width}px`;
+    div.style.height = `${widget.height - headerHeight - 15}px`;
+    div.style.display = 'block';
+  }
+
+  private hideAllScrollOverlays() {
+    this.scrollOverlays.forEach(div => div.style.display = 'none');
+  }
+
+  private showAllScrollOverlays() {
+    this.widgets.forEach(w => {
+      const div = this.scrollOverlays.get(w);
+      if (div) this.positionScrollOverlay(w, div);
+    });
   }
 
   // --- INTERACTION LOGIC ---
@@ -55,20 +126,28 @@ export class Engine {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Search from top-most (end of array) to bottom-most
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
       
-      // Check resize handle first (bottom-right corner)
       if (widget.isHitResize(x, y)) {
         this.bringToFront(i);
         this.activeWidget = widget;
         this.isResizing = true;
         this.canvas.style.cursor = 'nwse-resize';
+        this.hideAllScrollOverlays(); // Hide to prevent jitter
+        return;
+      }
+
+      if (widget.isHitHeaderFilter(x, y)) {
+        this.onFilterClick?.(widget, e.clientX, e.clientY);
+        return;
+      }
+
+      if (widget.isHitHeaderSymbol(x, y)) {
+        this.onSymbolClick?.(widget, e.clientX, e.clientY);
         return;
       }
       
-      // Check general hit (drag)
       if (widget.isHit(x, y)) {
         this.bringToFront(i);
         this.activeWidget = widget;
@@ -76,6 +155,7 @@ export class Engine {
         this.dragOffsetX = x - widget.x;
         this.dragOffsetY = y - widget.y;
         this.canvas.style.cursor = 'grabbing';
+        this.hideAllScrollOverlays(); // Hide to prevent jitter
         return;
       }
     }
@@ -88,7 +168,6 @@ export class Engine {
 
     if (this.activeWidget) {
       if (this.isResizing) {
-        // Enforce a minimum size so it doesn't collapse
         const newWidth = Math.max(250, x - this.activeWidget.x);
         const newHeight = Math.max(200, y - this.activeWidget.y);
         this.activeWidget.width = newWidth;
@@ -97,20 +176,20 @@ export class Engine {
         this.activeWidget.x = x - this.dragOffsetX;
         this.activeWidget.y = y - this.dragOffsetY;
       }
-      return; // Skip hover logic while actively dragging/resizing
+      return;
     }
 
-    // Hover detection for dynamic cursor styling
     let cursor = 'default';
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
       if (widget.isHitResize(x, y)) {
-        cursor = 'nwse-resize';
-        break;
+        cursor = 'nwse-resize'; break;
+      }
+      if (widget.isHitHeaderFilter(x, y) || widget.isHitHeaderSymbol(x, y)) {
+        cursor = 'pointer'; break;
       }
       if (widget.isHit(x, y)) {
-        cursor = 'grab';
-        break;
+        cursor = 'grab'; break;
       }
     }
     this.canvas.style.cursor = cursor;
@@ -121,13 +200,13 @@ export class Engine {
       this.isDragging = false;
       this.isResizing = false;
       this.activeWidget = null;
-      // Cursor style will reset on next mousemove
+      this.showAllScrollOverlays(); // Put DOM overlays back over canvas exactly matching new bounds
     }
   }
 
   private bringToFront(index: number) {
     const widget = this.widgets.splice(index, 1)[0];
-    this.widgets.push(widget); // Push to end so it renders last (on top)
+    this.widgets.push(widget);
   }
 
   // --- RENDER LOOP ---
@@ -135,14 +214,10 @@ export class Engine {
   private loop = () => {
     const rect = this.canvas.getBoundingClientRect();
     
-    // Clear screen
     this.ctx.clearRect(0, 0, rect.width, rect.height);
-    
-    // Draw premium dark background
     this.ctx.fillStyle = '#0a0a0c'; 
     this.ctx.fillRect(0, 0, rect.width, rect.height);
 
-    // Subtle grid dots
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
     for(let x = 0; x < rect.width; x += 30) {
       for(let y = 0; y < rect.height; y += 30) {
@@ -152,9 +227,7 @@ export class Engine {
       }
     }
 
-    // Draw widgets
     for (const widget of this.widgets) {
-      // Culling: only draw if intersecting the screen bounds
       if (
         widget.x + widget.width > 0 &&
         widget.x < rect.width &&

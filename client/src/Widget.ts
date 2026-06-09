@@ -52,6 +52,16 @@ export class Widget {
            mouseY >= this.y + this.height - handleSize && mouseY <= this.y + this.height;
   }
 
+  public isHitHeaderSymbol(mouseX: number, mouseY: number): boolean {
+    return mouseX >= this.x && mouseX <= this.x + 150 && 
+           mouseY >= this.y && mouseY <= this.y + 44;
+  }
+
+  public isHitHeaderFilter(mouseX: number, mouseY: number): boolean {
+    return mouseX >= this.x + this.width - 60 && mouseX <= this.x + this.width &&
+           mouseY >= this.y && mouseY <= this.y + 44;
+  }
+
   public draw(ctx: CanvasRenderingContext2D) {
     // Setup for glassmorphism-like clean rendering
     ctx.save();
