@@ -33,7 +33,7 @@ export class Engine {
 
   // Callbacks
   public onSymbolClick?: (widget: Widget, x: number, y: number) => void;
-  public onFilterClick?: (widget: Widget, x: number, y: number) => void;
+  public onCloseClick?: (widget: Widget) => void;
 
   constructor(canvasId: string, uiLayerId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -216,7 +216,7 @@ export class Engine {
         cursor = "nwse-resize";
         break;
       }
-      if (widget.isHitHeaderFilter(x, y) || widget.isHitHeaderSymbol(x, y)) {
+      if (widget.isHitHeaderClose(x, y) || widget.isHitHeaderSymbol(x, y)) {
         cursor = "pointer";
         break;
       }
@@ -240,8 +240,8 @@ export class Engine {
 
         // Treat short drags as clicks
         if (distance < 5) {
-          if (this.activeWidget.isHitHeaderFilter(x, y)) {
-            this.onFilterClick?.(this.activeWidget, e.clientX, e.clientY);
+          if (this.activeWidget.isHitHeaderClose(x, y)) {
+            this.onCloseClick?.(this.activeWidget);
           } else if (this.activeWidget.isHitHeaderSymbol(x, y)) {
             this.onSymbolClick?.(this.activeWidget, e.clientX, e.clientY);
           }

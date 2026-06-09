@@ -30,12 +30,6 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div id="symbol-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
       <!-- Options injected by JS -->
     </div>
-
-    <div id="filter-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
-      <div class="dropdown-item" data-val="0">ALL</div>
-      <div class="dropdown-item" data-val="1">BUY</div>
-      <div class="dropdown-item" data-val="2">SELL</div>
-    </div>
   </div>
 `;
 
@@ -49,7 +43,6 @@ engine.setWSManager(wsManager);
 const addWidgetBtn = document.getElementById("add-widget-btn")!;
 const widgetCounter = document.getElementById("widget-counter")!;
 const symbolDropdown = document.getElementById("symbol-dropdown")!;
-const filterDropdown = document.getElementById("filter-dropdown")!;
 
 const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
@@ -100,10 +93,9 @@ addWidgetBtn.addEventListener("click", () => {
 });
 
 // Hide dropdowns when clicking anywhere outside them
-window.addEventListener("mousedown", e => {
+window.addEventListener("mousedown", (e) => {
   if (!(e.target as HTMLElement).closest(".dropdown")) {
     symbolDropdown.style.display = "none";
-    filterDropdown.style.display = "none";
   }
 });
 
@@ -113,15 +105,16 @@ engine.onSymbolClick = (widget, x, y) => {
   symbolDropdown.style.left = `${x}px`;
   symbolDropdown.style.top = `${y + 20}px`;
   symbolDropdown.style.display = "block";
-  filterDropdown.style.display = "none";
 };
 
-engine.onFilterClick = (widget, x, y) => {
-  activeTargetWidget = widget;
-  filterDropdown.style.left = `${x - 60}px`;
-  filterDropdown.style.top = `${y + 20}px`;
-  filterDropdown.style.display = "block";
-  symbolDropdown.style.display = "none";
+engine.onCloseClick = (widget) => {
+  const handler = widgetHandlers.get(widget);
+  if (handler) {
+    wsManager.unsubscribe(widget.symbolId, handler);
+    widgetHandlers.delete(widget);
+  }
+  engine.removeWidget(widget);
+  widgetCounter.innerText = `${engine.getWidgets().length} / 50 Widgets`;
 };
 
 // Handle Dropdown selections
@@ -146,19 +139,5 @@ symbolDropdown.addEventListener("mousedown", e => {
       }
     }
     symbolDropdown.style.display = "none";
-  }
-});
-
-filterDropdown.addEventListener("mousedown", e => {
-  const target = e.target as HTMLElement;
-  if (target.classList.contains("dropdown-item") && activeTargetWidget) {
-    const val = parseInt(target.getAttribute("data-val")!, 10);
-    activeTargetWidget.filter = val;
-
-    // Clear existing trades to strictly enforce the visual filter immediately
-    activeTargetWidget.trades = [];
-    activeTargetWidget.scrollY = 0;
-
-    filterDropdown.style.display = "none";
   }
 });

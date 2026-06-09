@@ -8,7 +8,6 @@ export class Widget {
   public width: number;
   public height: number;
   public symbolId: number;
-  public filter: number; // 0 = ALL, 1 = BUY, 2 = SELL
   public trades: Trade[] = [];
   public scrollY: number = 0;
 
@@ -19,14 +18,9 @@ export class Widget {
     this.y = y;
     this.width = 340;
     this.height = 420;
-    this.filter = 0;
   }
 
   public addTrade(trade: Trade) {
-    // Filtering logic
-    if (this.filter === 1 && trade.side !== 0) return; // BUY filter
-    if (this.filter === 2 && trade.side !== 1) return; // SELL filter
-
     this.trades.unshift(trade);
     if (this.trades.length > 100) {
       this.trades.length = 100;
@@ -61,9 +55,9 @@ export class Widget {
     );
   }
 
-  public isHitHeaderFilter(mouseX: number, mouseY: number): boolean {
+  public isHitHeaderClose(mouseX: number, mouseY: number): boolean {
     return (
-      mouseX >= this.x + this.width - 60 &&
+      mouseX >= this.x + this.width - 44 &&
       mouseX <= this.x + this.width &&
       mouseY >= this.y &&
       mouseY <= this.y + 44
@@ -114,15 +108,13 @@ export class Widget {
       this.y + headerHeight / 2
     );
 
-    // Filter text indicator
+    // Close button indicator
     ctx.fillStyle = t.textSecondary;
-    ctx.font = "12px Inter, sans-serif";
-    ctx.textAlign = "right";
-    const filterText =
-      this.filter === 0 ? "ALL" : this.filter === 1 ? "BUY" : "SELL";
+    ctx.font = "14px Inter, sans-serif";
+    ctx.textAlign = "center";
     ctx.fillText(
-      filterText,
-      this.x + this.width - 16,
+      "✕",
+      this.x + this.width - 22,
       this.y + headerHeight / 2
     );
     ctx.textAlign = "left";
