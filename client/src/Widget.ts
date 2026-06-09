@@ -53,7 +53,7 @@ export class Widget {
   }
 
   public isHitHeaderSymbol(mouseX: number, mouseY: number): boolean {
-    return mouseX >= this.x && mouseX <= this.x + 150 && 
+    return mouseX >= this.x && mouseX <= this.x + this.width - 60 && 
            mouseY >= this.y && mouseY <= this.y + 44;
   }
 

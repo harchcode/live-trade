@@ -12,6 +12,9 @@ export class Engine {
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private zIndexCounter = 10;
 
   // DOM Overlays
   private uiLayer: HTMLDivElement;
@@ -79,6 +82,7 @@ export class Engine {
     div.style.overflowY = 'auto';
     div.style.overflowX = 'hidden';
     div.style.pointerEvents = 'auto'; // allow scrolling interaction
+    div.style.zIndex = (this.zIndexCounter++).toString(); // Start with proper z-index
     
     // Webkit specific styling to hide scrollbars until hover (or style natively)
     div.className = 'widget-scroll-overlay';
@@ -104,7 +108,7 @@ export class Engine {
     div.style.left = `${widget.x}px`;
     div.style.top = `${widget.y + headerHeight}px`;
     div.style.width = `${widget.width}px`;
-    div.style.height = `${widget.height - headerHeight - 15}px`;
+    div.style.height = `${widget.height - headerHeight - 15}px`; // Leave bottom 15px for resize handle
     div.style.display = 'block';
   }
 
@@ -138,22 +142,14 @@ export class Engine {
         return;
       }
 
-      if (widget.isHitHeaderFilter(x, y)) {
-        this.onFilterClick?.(widget, e.clientX, e.clientY);
-        return;
-      }
-
-      if (widget.isHitHeaderSymbol(x, y)) {
-        this.onSymbolClick?.(widget, e.clientX, e.clientY);
-        return;
-      }
-      
       if (widget.isHit(x, y)) {
         this.bringToFront(i);
         this.activeWidget = widget;
         this.isDragging = true;
         this.dragOffsetX = x - widget.x;
         this.dragOffsetY = y - widget.y;
+        this.dragStartX = x;
+        this.dragStartY = y;
         this.canvas.style.cursor = 'grabbing';
         this.hideAllScrollOverlays(); // Hide to prevent jitter
         return;
@@ -195,8 +191,26 @@ export class Engine {
     this.canvas.style.cursor = cursor;
   }
 
-  private onMouseUp = () => {
+  private onMouseUp = (e: MouseEvent) => {
     if (this.activeWidget) {
+      if (this.isDragging) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const dx = x - this.dragStartX;
+        const dy = y - this.dragStartY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Treat short drags as clicks
+        if (distance < 5) {
+          if (this.activeWidget.isHitHeaderFilter(x, y)) {
+            this.onFilterClick?.(this.activeWidget, e.clientX, e.clientY);
+          } else if (this.activeWidget.isHitHeaderSymbol(x, y)) {
+            this.onSymbolClick?.(this.activeWidget, e.clientX, e.clientY);
+          }
+        }
+      }
+
       this.isDragging = false;
       this.isResizing = false;
       this.activeWidget = null;
@@ -207,6 +221,12 @@ export class Engine {
   private bringToFront(index: number) {
     const widget = this.widgets.splice(index, 1)[0];
     this.widgets.push(widget);
+    
+    // Crucial: Update DOM overlay z-index so it doesn't block clicks to newer widgets
+    const div = this.scrollOverlays.get(widget);
+    if (div) {
+      div.style.zIndex = (this.zIndexCounter++).toString();
+    }
   }
 
   // --- RENDER LOOP ---
