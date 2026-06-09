@@ -173,12 +173,14 @@ export class Widget {
       this.y + headerHeight / 2
     );
 
-    // Close button indicator
-    ctx.fillStyle = t.textSecondary;
-    ctx.font = "14px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("✕", this.x + this.width - 22, this.y + headerHeight / 2);
-    ctx.textAlign = "left";
+    // Draw close button 'x' at right side only if active
+    if (isActive) {
+      ctx.fillStyle = t.textSecondary;
+      ctx.font = "14px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("✕", this.x + this.width - 22, this.y + headerHeight / 2);
+      ctx.textAlign = "left";
+    }
 
     // Draw Trades (Clipped)
     ctx.save();
