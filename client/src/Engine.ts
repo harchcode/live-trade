@@ -34,6 +34,7 @@ export class Engine {
   // Callbacks
   public onSymbolClick?: (widget: Widget, x: number, y: number) => void;
   public onCloseClick?: (widget: Widget) => void;
+  public onLayoutChange?: () => void;
 
   constructor(canvasId: string, uiLayerId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -75,6 +76,7 @@ export class Engine {
   public addWidget(widget: Widget) {
     this.widgets.push(widget);
     this.createScrollOverlay(widget);
+    this.onLayoutChange?.();
   }
 
   public removeWidget(widget: Widget) {
@@ -86,6 +88,7 @@ export class Engine {
         div.remove();
         this.scrollOverlays.delete(widget);
       }
+      this.onLayoutChange?.();
     }
   }
 
@@ -252,6 +255,7 @@ export class Engine {
       this.isResizing = false;
       this.activeWidget = null;
       this.showAllScrollOverlays(); // Put DOM overlays back over canvas exactly matching new bounds
+      this.onLayoutChange?.();
     }
   };
 

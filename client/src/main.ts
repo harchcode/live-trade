@@ -56,6 +56,39 @@ symbolDropdown.innerHTML = dropdownHtml;
 
 let activeTargetWidget: Widget | null = null;
 
+function saveLayout() {
+  const layout = engine.getWidgets().map(w => [
+    w.symbolId,
+    Math.round(w.x),
+    Math.round(w.y),
+    Math.round(w.width),
+    Math.round(w.height)
+  ]);
+  localStorage.setItem('widgets_layout', JSON.stringify(layout));
+}
+
+// Restore saved layout
+const savedLayout = localStorage.getItem('widgets_layout');
+if (savedLayout) {
+  try {
+    const layout = JSON.parse(savedLayout) as [number, number, number, number, number][];
+    for (const [symbolId, x, y, w, h] of layout) {
+      const widget = new Widget(symbolId, x, y);
+      widget.width = w;
+      widget.height = h;
+      const handler = (trade: Trade) => widget.addTrade(trade);
+      widgetHandlers.set(widget, handler);
+      engine.addWidget(widget);
+      wsManager.subscribe(widget.symbolId, handler);
+    }
+    widgetCounter.innerText = `${engine.getWidgets().length} / 50 Widgets`;
+  } catch (e) {
+    console.error("Failed to restore layout", e);
+  }
+}
+
+engine.onLayoutChange = saveLayout;
+
 // Handle Add Widget
 addWidgetBtn.addEventListener("click", () => {
   const widgets = engine.getWidgets();
@@ -124,6 +157,7 @@ symbolDropdown.addEventListener("mousedown", e => {
         // Subscribe new
         activeTargetWidget.symbolId = newId;
         wsManager.subscribe(newId, oldHandler);
+        saveLayout();
       }
     }
     symbolDropdown.style.display = "none";
