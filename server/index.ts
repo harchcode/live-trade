@@ -1,4 +1,4 @@
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer, WebSocket } from "ws";
 
 // --- Configuration ---
 const CONFIG = {
@@ -9,7 +9,7 @@ const CONFIG = {
   MAX_TRADES_PER_BATCH: 500, // max trades to send per 100ms tick
   PING_INTERVAL_MS: 10000,
   PONG_TIMEOUT_MS: 3000,
-  NUM_SYMBOLS: 100,
+  NUM_SYMBOLS: 100
 };
 
 const wss = new WebSocketServer({ port: CONFIG.PORT });
@@ -18,7 +18,18 @@ const wss = new WebSocketServer({ port: CONFIG.PORT });
 export const SYMBOL_MAP: Record<string, number> = {};
 export const SYMBOL_KEYS: string[] = [];
 
-const baseCoins = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'LINK'];
+const baseCoins = [
+  "BTC",
+  "ETH",
+  "USDT",
+  "BNB",
+  "XRP",
+  "SOL",
+  "ADA",
+  "DOGE",
+  "TRX",
+  "LINK"
+];
 for (let i = 0; i < CONFIG.NUM_SYMBOLS; i++) {
   const symbol = i < baseCoins.length ? `${baseCoins[i]}/IDR` : `COIN${i}/IDR`;
   SYMBOL_MAP[symbol] = i;
@@ -38,7 +49,10 @@ const activeSubscriptions = new Map<number, number>();
 function addSubscription(ws: ExtWebSocket, symbolId: number) {
   if (!ws.subscriptions.has(symbolId)) {
     ws.subscriptions.add(symbolId);
-    activeSubscriptions.set(symbolId, (activeSubscriptions.get(symbolId) || 0) + 1);
+    activeSubscriptions.set(
+      symbolId,
+      (activeSubscriptions.get(symbolId) || 0) + 1
+    );
   }
 }
 
@@ -78,7 +92,9 @@ setInterval(() => {
 
   // For each ACTIVE coin, generate 0 to MAX trades
   for (const symbolId of activeSymbolIds) {
-    const numTrades = Math.floor(Math.random() * (CONFIG.MAX_TRADES_PER_COIN_TICK + 1));
+    const numTrades = Math.floor(
+      Math.random() * (CONFIG.MAX_TRADES_PER_COIN_TICK + 1)
+    );
 
     for (let i = 0; i < numTrades; i++) {
       tradeQueue.push({
@@ -86,7 +102,7 @@ setInterval(() => {
         symbolId,
         side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
         price: Math.random() * 1000000000,
-        amount: Math.random() * 10,
+        amount: Math.random() * 10
       });
     }
   }
@@ -100,12 +116,14 @@ setInterval(() => {
 
   const tradesToProcess = tradeQueue.splice(0, CONFIG.MAX_TRADES_PER_BATCH);
 
-  wss.clients.forEach((client) => {
+  wss.clients.forEach(client => {
     const extClient = client as ExtWebSocket;
     if (extClient.readyState !== WebSocket.OPEN) return;
 
     // Filter trades for this specific client's subscriptions
-    const clientTrades = tradesToProcess.filter((t) => extClient.subscriptions.has(t.symbolId));
+    const clientTrades = tradesToProcess.filter(t =>
+      extClient.subscriptions.has(t.symbolId)
+    );
 
     if (clientTrades.length === 0) return;
 
@@ -130,18 +148,18 @@ setInterval(() => {
 }, CONFIG.THROTTLE_INTERVAL_MS);
 
 // --- 11. Server-side Heartbeat & Connection Handling ---
-wss.on('connection', (ws: ExtWebSocket) => {
-  console.log('Client connected');
+wss.on("connection", (ws: ExtWebSocket) => {
+  console.log("Client connected");
   ws.isAlive = true;
   ws.subscriptions = new Set();
 
   let pongTimeout: NodeJS.Timeout;
 
-  ws.on('pong', () => {
+  ws.on("pong", () => {
     clearTimeout(pongTimeout);
   });
 
-  ws.on('message', (message) => {
+  ws.on("message", message => {
     // Expected binary message: [Action (1 byte), SymbolID (2 bytes)]
     // Action: 0 = Subscribe, 1 = Unsubscribe, 2 = Ping
     if (Buffer.isBuffer(message) && message.length >= 1) {
@@ -172,14 +190,14 @@ wss.on('connection', (ws: ExtWebSocket) => {
     if (ws.readyState === WebSocket.OPEN) {
       ws.ping();
       pongTimeout = setTimeout(() => {
-        console.log('Terminating unresponsive client');
+        console.log("Terminating unresponsive client");
         ws.terminate();
       }, CONFIG.PONG_TIMEOUT_MS);
     }
   }, CONFIG.PING_INTERVAL_MS);
 
-  ws.on('close', () => {
-    console.log('Client disconnected');
+  ws.on("close", () => {
+    console.log("Client disconnected");
     handleClientDisconnect(ws);
     clearInterval(pingInterval);
     clearTimeout(pongTimeout);

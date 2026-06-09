@@ -1,10 +1,10 @@
-import './style.css';
-import { WSManager } from './WSManager';
-import { Engine } from './Engine';
-import { Widget } from './Widget';
-import type { Trade } from './types';
+import "./style.css";
+import { WSManager } from "./WSManager";
+import { Engine } from "./Engine";
+import { Widget } from "./Widget";
+import type { Trade } from "./types";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative; background: #0a0a0c;">
     <canvas id="main-canvas" style="display: block; position: absolute; z-index: 1;"></canvas>
     
@@ -15,6 +15,12 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div style="position: absolute; top: 20px; right: 20px; z-index: 10; display: flex; gap: 10px;">
       <div id="widget-counter" style="color: #8b8b9e; font-family: Inter, sans-serif; font-size: 14px; line-height: 36px;">0 / 50 Widgets</div>
       <button id="add-widget-btn" style="background: #00e676; color: #0a0a0c; border: none; padding: 0 16px; border-radius: 6px; font-weight: 600; cursor: pointer; height: 36px; font-family: Inter, sans-serif; box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);">+ Add Widget</button>
+    </div>
+
+    <!-- Top left performance HUD -->
+    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; background: rgba(30, 30, 35, 0.85); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);">
+      <div id="fps-counter" style="color: #00e676; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
+      <div id="mem-counter" style="color: #8b8b9e; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Mem: -- MB</div>
     </div>
 
     <!-- Dropdowns (Hidden by default) -->
@@ -30,18 +36,28 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `;
 
+const wsManager = new WSManager("ws://localhost:8080");
+const engine = new Engine("main-canvas", "ui-layer");
 
-const wsManager = new WSManager('ws://localhost:8080');
-const engine = new Engine('main-canvas', 'ui-layer');
-
-const addWidgetBtn = document.getElementById('add-widget-btn')!;
-const widgetCounter = document.getElementById('widget-counter')!;
-const symbolDropdown = document.getElementById('symbol-dropdown')!;
-const filterDropdown = document.getElementById('filter-dropdown')!;
+const addWidgetBtn = document.getElementById("add-widget-btn")!;
+const widgetCounter = document.getElementById("widget-counter")!;
+const symbolDropdown = document.getElementById("symbol-dropdown")!;
+const filterDropdown = document.getElementById("filter-dropdown")!;
 
 // Generate 100 symbols for the dropdown to match the server mock
-const baseCoins = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'LINK'];
-let dropdownHtml = '';
+const baseCoins = [
+  "BTC",
+  "ETH",
+  "USDT",
+  "BNB",
+  "XRP",
+  "SOL",
+  "ADA",
+  "DOGE",
+  "TRX",
+  "LINK"
+];
+let dropdownHtml = "";
 for (let i = 0; i < 100; i++) {
   const symbol = i < baseCoins.length ? `${baseCoins[i]}/IDR` : `COIN${i}/IDR`;
   dropdownHtml += `<div class="dropdown-item" data-id="${i}">${symbol}</div>`;
@@ -51,7 +67,7 @@ symbolDropdown.innerHTML = dropdownHtml;
 let activeTargetWidget: Widget | null = null;
 
 // Handle Add Widget
-addWidgetBtn.addEventListener('click', () => {
+addWidgetBtn.addEventListener("click", () => {
   const widgets = engine.getWidgets();
   if (widgets.length >= 50) return;
 
@@ -74,10 +90,10 @@ addWidgetBtn.addEventListener('click', () => {
 });
 
 // Hide dropdowns when clicking anywhere outside them
-window.addEventListener('mousedown', (e) => {
-  if (!(e.target as HTMLElement).closest('.dropdown')) {
-    symbolDropdown.style.display = 'none';
-    filterDropdown.style.display = 'none';
+window.addEventListener("mousedown", e => {
+  if (!(e.target as HTMLElement).closest(".dropdown")) {
+    symbolDropdown.style.display = "none";
+    filterDropdown.style.display = "none";
   }
 });
 
@@ -86,27 +102,30 @@ engine.onSymbolClick = (widget, x, y) => {
   activeTargetWidget = widget;
   symbolDropdown.style.left = `${x}px`;
   symbolDropdown.style.top = `${y + 20}px`;
-  symbolDropdown.style.display = 'block';
-  filterDropdown.style.display = 'none';
+  symbolDropdown.style.display = "block";
+  filterDropdown.style.display = "none";
 };
 
 engine.onFilterClick = (widget, x, y) => {
   activeTargetWidget = widget;
   filterDropdown.style.left = `${x - 60}px`;
   filterDropdown.style.top = `${y + 20}px`;
-  filterDropdown.style.display = 'block';
-  symbolDropdown.style.display = 'none';
+  filterDropdown.style.display = "block";
+  symbolDropdown.style.display = "none";
 };
 
 // Handle Dropdown selections
-symbolDropdown.addEventListener('mousedown', (e) => {
+symbolDropdown.addEventListener("mousedown", e => {
   const target = e.target as HTMLElement;
-  if (target.classList.contains('dropdown-item') && activeTargetWidget) {
-    const newId = parseInt(target.getAttribute('data-id')!, 10);
+  if (target.classList.contains("dropdown-item") && activeTargetWidget) {
+    const newId = parseInt(target.getAttribute("data-id")!, 10);
 
     if (activeTargetWidget.symbolId !== newId) {
       // Unsubscribe old
-      wsManager.unsubscribe(activeTargetWidget.symbolId, (activeTargetWidget as any)._tradeHandler);
+      wsManager.unsubscribe(
+        activeTargetWidget.symbolId,
+        (activeTargetWidget as any)._tradeHandler
+      );
 
       // Clear trades & scroll to top
       activeTargetWidget.trades = [];
@@ -116,20 +135,20 @@ symbolDropdown.addEventListener('mousedown', (e) => {
       activeTargetWidget.symbolId = newId;
       wsManager.subscribe(newId, (activeTargetWidget as any)._tradeHandler);
     }
-    symbolDropdown.style.display = 'none';
+    symbolDropdown.style.display = "none";
   }
 });
 
-filterDropdown.addEventListener('mousedown', (e) => {
+filterDropdown.addEventListener("mousedown", e => {
   const target = e.target as HTMLElement;
-  if (target.classList.contains('dropdown-item') && activeTargetWidget) {
-    const val = parseInt(target.getAttribute('data-val')!, 10);
+  if (target.classList.contains("dropdown-item") && activeTargetWidget) {
+    const val = parseInt(target.getAttribute("data-val")!, 10);
     activeTargetWidget.filter = val;
 
     // Clear existing trades to strictly enforce the visual filter immediately
     activeTargetWidget.trades = [];
     activeTargetWidget.scrollY = 0;
 
-    filterDropdown.style.display = 'none';
+    filterDropdown.style.display = "none";
   }
 });

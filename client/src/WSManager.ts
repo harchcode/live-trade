@@ -1,4 +1,4 @@
-import type { Trade, TradeSubscriber } from './types';
+import type { Trade, TradeSubscriber } from "./types";
 
 export class WSManager {
   private ws: WebSocket | null = null;
@@ -19,12 +19,12 @@ export class WSManager {
   }
 
   private connect() {
-    console.log('[WS] Connecting to server...');
+    console.log("[WS] Connecting to server...");
     this.ws = new WebSocket(this.url);
-    this.ws.binaryType = 'arraybuffer'; // Crucial for DataView parsing
+    this.ws.binaryType = "arraybuffer"; // Crucial for DataView parsing
 
     this.ws.onopen = () => {
-      console.log('[WS] Connected');
+      console.log("[WS] Connected");
       this.resetHeartbeat();
 
       // Re-subscribe to previously active subscriptions (useful on reconnect)
@@ -33,7 +33,7 @@ export class WSManager {
       }
     };
 
-    this.ws.onmessage = (event) => {
+    this.ws.onmessage = event => {
       this.resetHeartbeat(); // Any message from server resets silence timer
 
       if (event.data instanceof ArrayBuffer) {
@@ -50,7 +50,10 @@ export class WSManager {
 
         // Trades buffer length must be a multiple of TRADE_SIZE
         if (buffer.byteLength % TRADE_SIZE !== 0) {
-          console.warn('[WS] Received malformed binary data length:', buffer.byteLength);
+          console.warn(
+            "[WS] Received malformed binary data length:",
+            buffer.byteLength
+          );
           return;
         }
 
@@ -76,13 +79,13 @@ export class WSManager {
     };
 
     this.ws.onclose = () => {
-      console.log('[WS] Disconnected. Attempting reconnect...');
+      console.log("[WS] Disconnected. Attempting reconnect...");
       this.clearTimers();
       this.scheduleReconnect();
     };
 
-    this.ws.onerror = (err) => {
-      console.error('[WS] Error:', err);
+    this.ws.onerror = err => {
+      console.error("[WS] Error:", err);
       // Close will trigger onclose which handles reconnect
       this.ws?.close();
     };
@@ -162,7 +165,8 @@ export class WSManager {
 
   private clearTimers() {
     if (this.heartbeatTimer !== null) window.clearTimeout(this.heartbeatTimer);
-    if (this.heartbeatInterval !== null) window.clearInterval(this.heartbeatInterval);
+    if (this.heartbeatInterval !== null)
+      window.clearInterval(this.heartbeatInterval);
     if (this.reconnectTimer !== null) window.clearTimeout(this.reconnectTimer);
     this.heartbeatTimer = null;
     this.heartbeatInterval = null;
