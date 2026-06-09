@@ -13,7 +13,7 @@ export const themes = {
     hudBg: 'rgba(30, 30, 35, 0.85)',
     dropdownBg: '#1e1e25',
     dropdownHover: 'rgba(255, 255, 255, 0.1)',
-    shadow: 'rgba(0,0,0,0.5)',
+    shadow: '#000000',
     scrollThumb: 'rgba(255,255,255,0.2)',
     scrollThumbHover: 'rgba(255,255,255,0.4)',
   },
