@@ -1,38 +1,31 @@
 import './style.css';
 import { WSManager } from './WSManager';
-import type { Trade } from './types';
+import { Engine } from './Engine';
+import { Widget } from './Widget';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <h1>Crypto Live Trade Terminal</h1>
-    <p id="status">Connecting...</p>
-    <div id="messages" style="height: 300px; overflow-y: auto; background: #111; color: #0f0; padding: 10px; font-family: monospace;"></div>
+  <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative;">
+    <canvas id="main-canvas" style="display: block;"></canvas>
+    <div id="ui-layer" style="position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%;"></div>
   </div>
 `;
 
+// Adjust styles for full screen premium look
+document.body.style.margin = '0';
+document.body.style.padding = '0';
+document.body.style.background = '#0a0a0c';
+document.body.style.fontFamily = 'Inter, sans-serif';
+
 const wsManager = new WSManager('ws://localhost:8080');
+const engine = new Engine('main-canvas');
 
-// Just for testing phase 2: Subscribe to a few symbols and log them
-const messagesEl = document.getElementById('messages')!;
+// Instantiate testing widgets
+const w1 = new Widget(0, 50, 50); // BTC/IDR (Symbol ID 0)
+const w2 = new Widget(1, 420, 100); // ETH/IDR (Symbol ID 1)
 
-function onTradeReceived(trade: Trade) {
-  const p = document.createElement('div');
-  p.innerText = `[${new Date(Number(trade.timestamp)).toISOString()}] Symbol: ${trade.symbolId} | Side: ${trade.side === 1 ? 'SELL' : 'BUY'} | Price: ${trade.price.toFixed(2)} | Amount: ${trade.amount.toFixed(4)}`;
-  messagesEl.appendChild(p);
+engine.addWidget(w1);
+engine.addWidget(w2);
 
-  // Keep only the last 50 logs so it doesn't crash the DOM
-  if (messagesEl.childNodes.length > 50) {
-    messagesEl.removeChild(messagesEl.firstChild!);
-  }
-
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-// Subscribing after a slight delay to ensure connection is open
-// In a real app, the WSManager handles queueing subscriptions, but here it's fine.
-setTimeout(() => {
-  document.getElementById('status')!.innerText =
-    'Connected! Subscribed to BTC/IDR (0) and ETH/IDR (1)';
-  wsManager.subscribe(0, onTradeReceived);
-  wsManager.subscribe(1, onTradeReceived);
-}, 500);
+// Hook widgets to WS manager
+wsManager.subscribe(w1.symbolId, (trade) => w1.addTrade(trade));
+wsManager.subscribe(w2.symbolId, (trade) => w2.addTrade(trade));
