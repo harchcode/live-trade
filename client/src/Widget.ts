@@ -101,8 +101,60 @@ export class Widget {
     // Draw Header Fill
     ctx.fillStyle = t.widgetHeaderBg;
     ctx.beginPath();
-    ctx.roundRect(this.x, this.y, this.width, 44, [8, 8, 0, 0]);
+    ctx.roundRect(this.x, this.y, this.width, headerHeight, 8);
+    ctx.roundRect(this.x, this.y, this.width, headerHeight, 0);
     ctx.fill();
+
+    // Draw Mini Sparkline
+    if (this.trades.length > 1) {
+      const numPoints = Math.min(50, this.trades.length);
+      const points = this.trades.slice(0, numPoints).map(tr => tr.price).reverse();
+      
+      const maxP = Math.max(...points);
+      const minP = Math.min(...points);
+      const range = maxP - minP || 1; // Prevent divide by zero if flat
+      
+      const startX = this.x + 110;
+      const endX = this.x + this.width - 40;
+      const graphW = endX - startX;
+      
+      if (graphW > 20) { // Only draw if widget is wide enough
+        const graphH = 24;
+        const startY = this.y + 10;
+        
+        const isUp = points[points.length - 1] >= points[0];
+        const lineColor = isUp ? t.colorBuy : t.colorSell;
+        
+        ctx.beginPath();
+        const coords: [number, number][] = [];
+        
+        for (let i = 0; i < points.length; i++) {
+          const px = startX + (i / (numPoints - 1)) * graphW;
+          const py = startY + graphH - ((points[i] - minP) / range) * graphH;
+          coords.push([px, py]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        
+        // Stroke the softer line (60% opacity to reduce eye strain)
+        ctx.strokeStyle = lineColor + "99";
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = "round";
+        ctx.stroke();
+        
+        // Draw the gradient glow underneath
+        ctx.lineTo(coords[coords.length - 1][0], startY + graphH);
+        ctx.lineTo(coords[0][0], startY + graphH);
+        ctx.closePath();
+        
+        const grad = ctx.createLinearGradient(0, startY, 0, startY + graphH);
+        grad.addColorStop(0, lineColor + "40"); // 25% opacity
+        grad.addColorStop(1, lineColor + "00"); // 0% opacity
+        
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+    }
 
     // Draw Unified Outline Border
     ctx.beginPath();
