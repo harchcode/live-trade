@@ -6,7 +6,7 @@ const CONFIG = {
   DATA_GEN_INTERVAL_MS: 50,
   THROTTLE_INTERVAL_MS: 100,
   MIN_TRADES_PER_TICK: 5,
-  MAX_TRADES_PER_TICK: 25,
+  MAX_TRADES_PER_TICK: 50,
   MAX_TRADES_PER_BATCH: 500, // max trades to send per 100ms tick
   PING_INTERVAL_MS: 10000,
   PONG_TIMEOUT_MS: 3000,
@@ -91,7 +91,8 @@ setInterval(() => {
 
   // Global market activity: random number of trades occur across the entire exchange per tick
   const range = CONFIG.MAX_TRADES_PER_TICK - CONFIG.MIN_TRADES_PER_TICK + 1;
-  const totalTradesThisTick = Math.floor(Math.random() * range) + CONFIG.MIN_TRADES_PER_TICK; 
+  const totalTradesThisTick =
+    Math.floor(Math.random() * range) + CONFIG.MIN_TRADES_PER_TICK;
 
   for (let i = 0; i < totalTradesThisTick; i++) {
     const symbolId = Math.floor(Math.random() * CONFIG.NUM_SYMBOLS);

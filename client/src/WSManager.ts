@@ -14,6 +14,7 @@ export class WSManager {
   private listeners = new Map<number, Set<TradeSubscriber>>();
 
   public totalBytesReceived = 0;
+  public onStatusChange?: (status: "connected" | "reconnecting") => void;
 
   constructor(url: string) {
     this.url = url;
@@ -27,6 +28,7 @@ export class WSManager {
 
     this.ws.onopen = () => {
       console.log("[WS] Connected");
+      this.onStatusChange?.("connected");
       this.resetHeartbeat();
 
       // Re-subscribe to previously active subscriptions (useful on reconnect)
@@ -108,6 +110,7 @@ export class WSManager {
 
     this.ws.onclose = () => {
       console.log("[WS] Disconnected. Attempting reconnect...");
+      this.onStatusChange?.("reconnecting");
       this.clearTimers();
       this.scheduleReconnect();
     };

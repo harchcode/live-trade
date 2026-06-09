@@ -23,10 +23,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
 
     <!-- Top left performance HUD -->
-    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; background: var(--hud-bg, rgba(30, 30, 35, 0.85)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); backdrop-filter: blur(8px);">
+    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; gap: 15px; align-items: center; height: 36px;">
+      <div id="ws-status" style="color: var(--color-sell, #ff1744); font-family: Inter, sans-serif; font-size: 14px; font-weight: 600;">🔴 Connecting...</div>
       <div id="fps-counter" style="color: var(--color-buy, #00e676); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
-      <div id="mem-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Mem: -- MB</div>
-      <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Data: 0 KB</div>
+      <div id="mem-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Mem: -- MB</div>
+      <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Data: 0 KB</div>
     </div>
 
     <!-- Dropdowns (Hidden by default) -->
@@ -42,6 +43,17 @@ document.getElementById('theme-toggle-btn')!.addEventListener('click', toggleThe
 const wsManager = new WSManager("ws://localhost:8080");
 const engine = new Engine("main-canvas", "ui-layer");
 engine.setWSManager(wsManager);
+
+const wsStatus = document.getElementById("ws-status")!;
+wsManager.onStatusChange = (status) => {
+  if (status === "connected") {
+    wsStatus.innerText = "🟢 Connected";
+    wsStatus.style.color = "var(--color-buy, #00e676)";
+  } else {
+    wsStatus.innerText = "🔴 Reconnecting...";
+    wsStatus.style.color = "var(--color-sell, #ff1744)";
+  }
+};
 
 const addWidgetBtn = document.getElementById("add-widget-btn")!;
 const widgetCounter = document.getElementById("widget-counter")!;
