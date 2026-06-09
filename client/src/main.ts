@@ -3,6 +3,7 @@ import { WSManager } from "./WSManager";
 import { Engine } from "./Engine";
 import { Widget } from "./Widget";
 import type { Trade, TradeSubscriber } from "./types";
+import { getSymbolName } from './types';
 import { applyThemeToDOM, toggleTheme } from './theme';
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -47,22 +48,9 @@ const symbolDropdown = document.getElementById("symbol-dropdown")!;
 const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
 // Generate 100 symbols for the dropdown to match the server mock
-const baseCoins = [
-  "BTC",
-  "ETH",
-  "USDT",
-  "BNB",
-  "XRP",
-  "SOL",
-  "ADA",
-  "DOGE",
-  "TRX",
-  "LINK"
-];
 let dropdownHtml = "";
 for (let i = 0; i < 100; i++) {
-  const symbol = i < baseCoins.length ? `${baseCoins[i]}/IDR` : `COIN${i}/IDR`;
-  dropdownHtml += `<div class="dropdown-item" data-id="${i}">${symbol}</div>`;
+  dropdownHtml += `<div class="dropdown-item" data-id="${i}">${getSymbolName(i)}</div>`;
 }
 symbolDropdown.innerHTML = dropdownHtml;
 

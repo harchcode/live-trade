@@ -1,4 +1,4 @@
-import type { Trade } from "./types";
+import { type Trade, getSymbolName } from "./types";
 import { getTheme } from "./theme";
 
 export class Widget {
@@ -66,7 +66,7 @@ export class Widget {
 
   public draw(ctx: CanvasRenderingContext2D) {
     const t = getTheme();
-    
+
     // Setup for glassmorphism-like clean rendering
     ctx.save();
 
@@ -103,7 +103,7 @@ export class Widget {
     ctx.font = "600 15px Inter, sans-serif";
     ctx.textBaseline = "middle";
     ctx.fillText(
-      `SYMBOL ID: ${this.symbolId}`,
+      getSymbolName(this.symbolId),
       this.x + 16,
       this.y + headerHeight / 2
     );
@@ -112,11 +112,7 @@ export class Widget {
     ctx.fillStyle = t.textSecondary;
     ctx.font = "14px Inter, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(
-      "✕",
-      this.x + this.width - 22,
-      this.y + headerHeight / 2
-    );
+    ctx.fillText("✕", this.x + this.width - 22, this.y + headerHeight / 2);
     ctx.textAlign = "left";
 
     // Draw Trades (Clipped)
