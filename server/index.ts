@@ -1,15 +1,25 @@
 import { WebSocketServer, WebSocket } from 'ws';
 
-const port = 8080;
-const wss = new WebSocketServer({ port });
+// --- Configuration ---
+const CONFIG = {
+  PORT: 8080,
+  DATA_GEN_INTERVAL_MS: 50,
+  THROTTLE_INTERVAL_MS: 100,
+  MAX_TRADES_PER_COIN_TICK: 2,
+  MAX_TRADES_PER_BATCH: 500, // max trades to send per 100ms tick
+  PING_INTERVAL_MS: 10000,
+  PONG_TIMEOUT_MS: 3000,
+  NUM_SYMBOLS: 100,
+};
 
-// --- 6. 100+ Symbol Mapping ---
+const wss = new WebSocketServer({ port: CONFIG.PORT });
+
+// --- 6. Symbol Mapping ---
 export const SYMBOL_MAP: Record<string, number> = {};
-const SYMBOL_KEYS: string[] = [];
+export const SYMBOL_KEYS: string[] = [];
 
-// Generate 100 dummy symbols (e.g., BTC/IDR, ETH/IDR, COIN1/IDR ... COIN98/IDR)
 const baseCoins = ['BTC', 'ETH', 'USDT', 'BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'LINK'];
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < CONFIG.NUM_SYMBOLS; i++) {
   const symbol = i < baseCoins.length ? `${baseCoins[i]}/IDR` : `COIN${i}/IDR`;
   SYMBOL_MAP[symbol] = i;
   SYMBOL_KEYS.push(symbol);
@@ -50,7 +60,7 @@ function handleClientDisconnect(ws: ExtWebSocket) {
   }
 }
 
-// --- 9. Asynchronous Data Generation (20ms) ---
+// --- 9. Asynchronous Data Generation ---
 interface Trade {
   timestamp: bigint; // uint64
   symbolId: number; // uint16
@@ -62,33 +72,33 @@ interface Trade {
 const tradeQueue: Trade[] = [];
 
 setInterval(() => {
-  // Only generate if there are clients and active subscriptions
   if (wss.clients.size === 0 || activeSubscriptions.size === 0) return;
 
   const activeSymbolIds = Array.from(activeSubscriptions.keys());
 
-  // Randomly pick a few active symbols to generate trades for
-  const numTrades = Math.floor(Math.random() * 5); // 0-4 trades per 20ms tick
+  // For each ACTIVE coin, generate 0 to MAX trades
+  for (const symbolId of activeSymbolIds) {
+    const numTrades = Math.floor(Math.random() * (CONFIG.MAX_TRADES_PER_COIN_TICK + 1));
 
-  for (let i = 0; i < numTrades; i++) {
-    const symbolId = activeSymbolIds[Math.floor(Math.random() * activeSymbolIds.length)];
-    tradeQueue.push({
-      timestamp: BigInt(Date.now()),
-      symbolId,
-      side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
-      price: Math.random() * 1000000000,
-      amount: Math.random() * 10,
-    });
+    for (let i = 0; i < numTrades; i++) {
+      tradeQueue.push({
+        timestamp: BigInt(Date.now()),
+        symbolId,
+        side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
+        price: Math.random() * 1000000000,
+        amount: Math.random() * 10,
+      });
+    }
   }
-}, 20);
+}, CONFIG.DATA_GEN_INTERVAL_MS);
 
-// --- 10. Throttle Interval & Binary Packing (100ms) ---
+// --- 10. Throttle Interval & Binary Packing ---
 const TRADE_BYTE_SIZE = 27; // 8 + 2 + 1 + 8 + 8 bytes
 
 setInterval(() => {
   if (tradeQueue.length === 0 || wss.clients.size === 0) return;
 
-  const tradesToProcess = tradeQueue.splice(0, 500);
+  const tradesToProcess = tradeQueue.splice(0, CONFIG.MAX_TRADES_PER_BATCH);
 
   wss.clients.forEach((client) => {
     const extClient = client as ExtWebSocket;
@@ -117,7 +127,7 @@ setInterval(() => {
 
     extClient.send(buffer);
   });
-}, 100);
+}, CONFIG.THROTTLE_INTERVAL_MS);
 
 // --- 11. Server-side Heartbeat & Connection Handling ---
 wss.on('connection', (ws: ExtWebSocket) => {
@@ -154,9 +164,9 @@ wss.on('connection', (ws: ExtWebSocket) => {
       pongTimeout = setTimeout(() => {
         console.log('Terminating unresponsive client');
         ws.terminate();
-      }, 3000);
+      }, CONFIG.PONG_TIMEOUT_MS);
     }
-  }, 10000);
+  }, CONFIG.PING_INTERVAL_MS);
 
   ws.on('close', () => {
     console.log('Client disconnected');
@@ -166,4 +176,4 @@ wss.on('connection', (ws: ExtWebSocket) => {
   });
 });
 
-console.log(`WebSocket server running on ws://localhost:${port}`);
+console.log(`WebSocket server running on ws://localhost:${CONFIG.PORT}`);
