@@ -107,10 +107,10 @@ export class Engine {
     div.className = "widget-scroll-overlay";
 
     // A tall transparent div to force scrolling logic
-    // 100 max trades * 24px row height + some padding
+    // Precisely calculated for 100 trades + exactly 20px bottom padding
     const content = document.createElement("div");
     content.style.width = "100%";
-    content.style.height = "2450px";
+    content.style.height = "2408px";
     div.appendChild(content);
 
     div.addEventListener("scroll", () => {
@@ -282,7 +282,9 @@ export class Engine {
           this.fps >= 50 ? "#00e676" : this.fps >= 30 ? "#ffb300" : "#ff1744";
       }
 
-      const perf = performance as Performance & { memory?: { usedJSHeapSize: number } };
+      const perf = performance as Performance & {
+        memory?: { usedJSHeapSize: number };
+      };
       if (this.memEl && perf.memory) {
         const mb = (perf.memory.usedJSHeapSize / 1048576).toFixed(1);
         this.memEl.innerText = `Mem: ${mb} MB`;
@@ -291,18 +293,18 @@ export class Engine {
       if (this.dataEl && this.wsManager) {
         const bytes = this.wsManager.totalBytesReceived;
         if (bytes > 1048576) {
-           const mb = (bytes / 1048576).toFixed(2);
-           this.dataEl.innerText = `Data: ${mb} MB`;
+          const mb = (bytes / 1048576).toFixed(2);
+          this.dataEl.innerText = `Data: ${mb} MB`;
         } else {
-           const kb = (bytes / 1024).toFixed(1);
-           this.dataEl.innerText = `Data: ${kb} KB`;
+          const kb = (bytes / 1024).toFixed(1);
+          this.dataEl.innerText = `Data: ${kb} KB`;
         }
       }
     }
 
     const rect = this.canvas.getBoundingClientRect();
     const t = getTheme();
-    
+
     this.ctx.clearRect(0, 0, rect.width, rect.height);
     this.ctx.fillStyle = t.bg;
     this.ctx.fillRect(0, 0, rect.width, rect.height);

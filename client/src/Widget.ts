@@ -153,7 +153,7 @@ export class Widget {
       // Side
       ctx.fillStyle = trade.side === 1 ? t.colorSell : t.colorBuy;
       const sideText = trade.side === 1 ? "SELL" : "BUY ";
-      ctx.fillText(sideText, this.x + 100, drawY);
+      ctx.fillText(sideText, this.x + 90, drawY);
 
       // Price
       ctx.fillStyle = t.textPrimary;
@@ -162,7 +162,7 @@ export class Widget {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      ctx.fillText(priceStr, this.x + 220, drawY);
+      ctx.fillText(priceStr, this.x + 245, drawY);
 
       // Amount
       ctx.fillStyle = t.textSecondary;
