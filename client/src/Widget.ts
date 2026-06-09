@@ -66,11 +66,12 @@ export class Widget {
 
   public draw(ctx: CanvasRenderingContext2D, isActive: boolean = false) {
     const t = getTheme();
+    const headerHeight = 44;
     
     // Setup for glassmorphism-like clean rendering
     ctx.save();
 
-    // Draw background
+    // Draw background (Body)
     ctx.fillStyle = t.widgetBg;
     ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
     ctx.shadowBlur = 10;
@@ -80,22 +81,17 @@ export class Widget {
     ctx.fill();
     ctx.shadowColor = "transparent"; // Reset shadow for other elements
 
-    // Draw border
-    ctx.strokeStyle = isActive ? t.widgetBorderActive : t.widgetBorder;
-    ctx.lineWidth = isActive ? 2 : 1;
-    ctx.stroke();
-
-    // Draw Header
-    const headerHeight = 44;
+    // Draw Header Fill
     ctx.fillStyle = t.widgetHeaderBg;
     ctx.beginPath();
-    ctx.roundRect(this.x, this.y, this.width, headerHeight, [8, 8, 0, 0]);
+    ctx.roundRect(this.x, this.y, this.width, 44, [8, 8, 0, 0]);
     ctx.fill();
 
-    // Header Separator
+    // Draw Unified Outline Border
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y + headerHeight);
-    ctx.lineTo(this.x + this.width, this.y + headerHeight);
+    ctx.roundRect(this.x, this.y, this.width, this.height, 8);
+    ctx.strokeStyle = isActive ? t.widgetBorderActive : t.widgetBorder;
+    ctx.lineWidth = isActive ? 2 : 1;
     ctx.stroke();
 
     // Header Text
