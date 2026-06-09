@@ -143,17 +143,27 @@ wss.on('connection', (ws: ExtWebSocket) => {
 
   ws.on('message', (message) => {
     // Expected binary message: [Action (1 byte), SymbolID (2 bytes)]
-    // Action: 0 = Subscribe, 1 = Unsubscribe
-    if (Buffer.isBuffer(message) && message.length >= 3) {
+    // Action: 0 = Subscribe, 1 = Unsubscribe, 2 = Ping
+    if (Buffer.isBuffer(message) && message.length >= 1) {
       const action = message.readUInt8(0);
-      const symbolId = message.readUInt16LE(1);
 
-      if (action === 0) {
-        addSubscription(ws, symbolId);
-        console.log(`Client subscribed to ${symbolId}`);
-      } else if (action === 1) {
-        removeSubscription(ws, symbolId);
-        console.log(`Client unsubscribed from ${symbolId}`);
+      if (action === 2) {
+        // Client manual ping, send manual pong (Action 3)
+        const pongBuf = Buffer.alloc(1);
+        pongBuf.writeUInt8(3, 0);
+        ws.send(pongBuf);
+        return;
+      }
+
+      if (message.length >= 3) {
+        const symbolId = message.readUInt16LE(1);
+        if (action === 0) {
+          addSubscription(ws, symbolId);
+          console.log(`Client subscribed to ${symbolId}`);
+        } else if (action === 1) {
+          removeSubscription(ws, symbolId);
+          console.log(`Client unsubscribed from ${symbolId}`);
+        }
       }
     }
   });
