@@ -32,7 +32,7 @@ This plan outlines the architecture and implementation steps for building the Cr
 ### 6. Server-Side Pub/Sub
 - The server will hold **100+** symbol mappings.
 - To save bandwidth, the 20ms data generator will **only** generate trades for symbols that have at least one active subscriber.
-- The client must send text/json messages to the server (e.g., `{"action": "subscribe", "symbolId": 1}`) to manage subscriptions when widgets are added/changed.
+- The client must send binary messages to the server (e.g., `[Action: uint8] [SymbolID: uint16]` where Action is 0 for Subscribe, 1 for Unsubscribe) to manage subscriptions when widgets are added/changed.
 - The server tracks active subscriptions per connection.
 
 ---
@@ -47,7 +47,7 @@ This plan outlines the architecture and implementation steps for building the Cr
 5. Create the basic WebSocket server listening on a port.
 6. Implement the binary protocol mapping structure with **100+ symbols**.
 7. Implement server-side client connection tracking to track active subscriptions per client.
-8. Implement listening for JSON `subscribe`/`unsubscribe` messages from clients.
+8. Implement listening for **binary** `subscribe`/`unsubscribe` messages from clients (3-byte payload).
 9. Implement the mock trade generator loop (runs every **20ms**) pushing trades into an internal queue, restricted to actively subscribed symbols.
 10. Implement the throttle loop (runs every **100ms**) that drains the queue, packs the `timestamp, symbolId, side, price, amount` into a binary buffer, and broadcasts it to clients.
 11. Implement server-side heartbeat (ping clients every 10s, disconnect if no pong after 3s).
