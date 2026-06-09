@@ -36,14 +36,28 @@ export class Widget {
     );
   }
 
-  public isHitResize(mouseX: number, mouseY: number): boolean {
-    const handleSize = 15;
-    return (
-      mouseX >= this.x + this.width - handleSize &&
-      mouseX <= this.x + this.width &&
-      mouseY >= this.y + this.height - handleSize &&
-      mouseY <= this.y + this.height
-    );
+  public getHitEdge(mouseX: number, mouseY: number): string | null {
+    const handle = 8;
+    const isLeft = Math.abs(mouseX - this.x) <= handle;
+    const isRight = Math.abs(mouseX - (this.x + this.width)) <= handle;
+    const isTop = Math.abs(mouseY - this.y) <= handle;
+    const isBottom = Math.abs(mouseY - (this.y + this.height)) <= handle;
+
+    if (mouseX < this.x - handle || mouseX > this.x + this.width + handle ||
+        mouseY < this.y - handle || mouseY > this.y + this.height + handle) {
+      return null;
+    }
+
+    if (isTop && isLeft) return 'nw';
+    if (isTop && isRight) return 'ne';
+    if (isBottom && isLeft) return 'sw';
+    if (isBottom && isRight) return 'se';
+    if (isTop && mouseX >= this.x && mouseX <= this.x + this.width) return 'n';
+    if (isBottom && mouseX >= this.x && mouseX <= this.x + this.width) return 's';
+    if (isLeft && mouseY >= this.y && mouseY <= this.y + this.height) return 'w';
+    if (isRight && mouseY >= this.y && mouseY <= this.y + this.height) return 'e';
+
+    return null;
   }
 
   public isHitHeaderSymbol(mouseX: number, mouseY: number, ctx?: CanvasRenderingContext2D): boolean {

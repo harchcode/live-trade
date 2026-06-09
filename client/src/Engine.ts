@@ -12,7 +12,8 @@ export class Engine {
 
   // Interactivity State
   private activeWidget: Widget | null = null;
-  private isResizing = false;
+  private resizeEdge: string | null = null;
+  private dragStartBounds = { x: 0, y: 0, w: 0, h: 0 };
   private isDragging = false;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
@@ -156,13 +157,14 @@ export class Engine {
     }
 
     const headerHeight = 44;
-    this.scrollOverlay.style.left = `${this.activeWidget.x}px`;
+    const inset = 8;
+    this.scrollOverlay.style.left = `${this.activeWidget.x + inset}px`;
     this.scrollOverlay.style.top = `${this.activeWidget.y + headerHeight}px`;
-    this.scrollOverlay.style.width = `${this.activeWidget.width}px`;
-    this.scrollOverlay.style.height = `${this.activeWidget.height - headerHeight - 15}px`; // Leave bottom 15px for resize handle
+    this.scrollOverlay.style.width = `${this.activeWidget.width - (inset * 2)}px`;
+    this.scrollOverlay.style.height = `${this.activeWidget.height - headerHeight - inset}px`; // Leave bottom space for handle
     this.scrollOverlay.style.display = "block";
 
-    const tradesHeight = this.activeWidget.trades.length * 24 + 20;
+    const tradesHeight = 100 * 24 + 20; // Assume max 100 rows for consistent scrollbar thumb size
     const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
     if (this.scrollContent.style.height !== newHeightStr) {
       this.scrollContent.style.height = newHeightStr;
@@ -182,8 +184,9 @@ export class Engine {
 
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
+      const edge = widget.getHitEdge(x, y);
 
-      if (widget.isHit(x, y) || widget.isHitResize(x, y)) {
+      if (widget.isHit(x, y) || edge) {
         if (this.activeWidget !== widget) {
           // Focus inactive widget and immediately return
           this.bringToFront(i);
@@ -193,9 +196,19 @@ export class Engine {
         }
 
         // Active widget interactions
-        if (widget.isHitResize(x, y)) {
-          this.isResizing = true;
-          this.canvas.style.cursor = "nwse-resize";
+        if (edge) {
+          this.resizeEdge = edge;
+          
+          const edgeCursorMap: Record<string, string> = {
+            'n': 'ns-resize', 's': 'ns-resize', 'e': 'ew-resize', 'w': 'ew-resize',
+            'nw': 'nwse-resize', 'se': 'nwse-resize', 'ne': 'nesw-resize', 'sw': 'nesw-resize'
+          };
+          this.canvas.style.cursor = edgeCursorMap[edge];
+          
+          this.dragStartX = x;
+          this.dragStartY = y;
+          this.dragStartBounds = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
+          
           this.scrollOverlay.style.display = "none";
           return;
         }
@@ -227,25 +240,52 @@ export class Engine {
     const y = e.clientY - rect.top;
 
     if (this.activeWidget) {
-      if (this.isResizing) {
-        const newWidth = Math.max(250, x - this.activeWidget.x);
-        const newHeight = Math.max(200, y - this.activeWidget.y);
-        this.activeWidget.width = newWidth;
-        this.activeWidget.height = newHeight;
+      if (this.resizeEdge) {
+        const dx = x - this.dragStartX;
+        const dy = y - this.dragStartY;
+        const b = this.dragStartBounds;
+
+        let newX = b.x;
+        let newY = b.y;
+        let newW = b.w;
+        let newH = b.h;
+
+        if (this.resizeEdge.includes('e')) newW = Math.max(250, b.w + dx);
+        if (this.resizeEdge.includes('s')) newH = Math.max(200, b.h + dy);
+        
+        if (this.resizeEdge.includes('w')) {
+          newW = Math.max(250, b.w - dx);
+          newX = b.x + (b.w - newW); // Shift X to keep right edge pinned
+        }
+        if (this.resizeEdge.includes('n')) {
+          newH = Math.max(200, b.h - dy);
+          newY = b.y + (b.h - newH); // Shift Y to keep bottom edge pinned
+        }
+
+        this.activeWidget.x = newX;
+        this.activeWidget.y = newY;
+        this.activeWidget.width = newW;
+        this.activeWidget.height = newH;
       } else if (this.isDragging) {
         this.activeWidget.x = x - this.dragOffsetX;
         this.activeWidget.y = y - this.dragOffsetY;
       }
-      if (this.isResizing || this.isDragging) return;
+      if (this.resizeEdge || this.isDragging) return;
     }
 
     let cursor = "default";
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
-      if (widget.isHit(x, y) || widget.isHitResize(x, y)) {
+      const edge = widget.getHitEdge(x, y);
+      
+      if (widget.isHit(x, y) || edge) {
         if (widget === this.activeWidget) {
-          if (widget.isHitResize(x, y)) {
-            cursor = "nwse-resize";
+          if (edge) {
+            const edgeCursorMap: Record<string, string> = {
+              'n': 'ns-resize', 's': 'ns-resize', 'e': 'ew-resize', 'w': 'ew-resize',
+              'nw': 'nwse-resize', 'se': 'nwse-resize', 'ne': 'nesw-resize', 'sw': 'nesw-resize'
+            };
+            cursor = edgeCursorMap[edge];
           } else if (widget.isHitHeaderClose(x, y) || widget.isHitHeaderSymbol(x, y)) {
             cursor = "pointer";
           } else if (widget.isHitHeader(x, y)) {
@@ -282,7 +322,7 @@ export class Engine {
       }
 
       this.isDragging = false;
-      this.isResizing = false;
+      this.resizeEdge = null;
       this.syncScrollOverlay(); // Put DOM overlays back over canvas exactly matching new bounds
       this.onLayoutChange?.();
     }
@@ -348,7 +388,7 @@ export class Engine {
 
     for (const widget of this.widgets) {
       if (widget === this.activeWidget) {
-        const tradesHeight = widget.trades.length * 24 + 20;
+        const tradesHeight = 100 * 24 + 20; // Assume max 100 rows for consistent scrollbar thumb size
         const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
         if (this.scrollContent.style.height !== newHeightStr) {
           this.scrollContent.style.height = newHeightStr;
