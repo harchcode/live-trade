@@ -35,7 +35,7 @@ export const themes = {
   }
 };
 
-export let currentTheme: 'dark' | 'light' = 'dark';
+export let currentTheme: 'dark' | 'light' = (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
 
 export function getTheme() {
   return themes[currentTheme];
@@ -43,6 +43,7 @@ export function getTheme() {
 
 export function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', currentTheme);
   applyThemeToDOM();
 }
 
