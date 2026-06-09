@@ -5,11 +5,12 @@ const CONFIG = {
   PORT: 8080,
   DATA_GEN_INTERVAL_MS: 50,
   THROTTLE_INTERVAL_MS: 100,
-  MAX_TRADES_PER_COIN_TICK: 2,
+  MIN_TRADES_PER_TICK: 5,
+  MAX_TRADES_PER_TICK: 25,
   MAX_TRADES_PER_BATCH: 500, // max trades to send per 100ms tick
   PING_INTERVAL_MS: 10000,
   PONG_TIMEOUT_MS: 3000,
-  NUM_SYMBOLS: 100
+  NUM_SYMBOLS: 50
 };
 
 const wss = new WebSocketServer({ port: CONFIG.PORT });
@@ -88,23 +89,23 @@ const tradeQueue: Trade[] = [];
 setInterval(() => {
   if (wss.clients.size === 0 || activeSubscriptions.size === 0) return;
 
-  const activeSymbolIds = Array.from(activeSubscriptions.keys());
+  // Global market activity: random number of trades occur across the entire exchange per tick
+  const range = CONFIG.MAX_TRADES_PER_TICK - CONFIG.MIN_TRADES_PER_TICK + 1;
+  const totalTradesThisTick = Math.floor(Math.random() * range) + CONFIG.MIN_TRADES_PER_TICK; 
 
-  // For each ACTIVE coin, generate 0 to MAX trades
-  for (const symbolId of activeSymbolIds) {
-    const numTrades = Math.floor(
-      Math.random() * (CONFIG.MAX_TRADES_PER_COIN_TICK + 1)
-    );
+  for (let i = 0; i < totalTradesThisTick; i++) {
+    const symbolId = Math.floor(Math.random() * CONFIG.NUM_SYMBOLS);
 
-    for (let i = 0; i < numTrades; i++) {
-      tradeQueue.push({
-        timestamp: BigInt(Date.now()),
-        symbolId,
-        side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
-        price: Math.random() * 1000000000,
-        amount: Math.random() * 10
-      });
-    }
+    // Optimization: Skip allocating memory for this trade if nobody is listening
+    if (!activeSubscriptions.has(symbolId)) continue;
+
+    tradeQueue.push({
+      timestamp: BigInt(Date.now()),
+      symbolId,
+      side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
+      price: Math.random() * 1000000000,
+      amount: Math.random() * 10
+    });
   }
 }, CONFIG.DATA_GEN_INTERVAL_MS);
 

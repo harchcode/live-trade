@@ -47,9 +47,9 @@ const symbolDropdown = document.getElementById("symbol-dropdown")!;
 
 const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
-// Generate 100 symbols for the dropdown to match the server mock
+// Generate 50 symbols for the dropdown to match the server mock
 let dropdownHtml = "";
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 50; i++) {
   dropdownHtml += `<div class="dropdown-item" data-id="${i}">${getSymbolName(i)}</div>`;
 }
 symbolDropdown.innerHTML = dropdownHtml;
