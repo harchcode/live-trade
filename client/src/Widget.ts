@@ -71,6 +71,13 @@ export class Widget {
     // Setup for glassmorphism-like clean rendering
     ctx.save();
 
+    // Hard Drop Shadow (High Performance, No Blur)
+    const shadowOffset = isActive ? 8 : 4;
+    ctx.fillStyle = t.shadow;
+    ctx.beginPath();
+    ctx.roundRect(this.x + shadowOffset, this.y + shadowOffset, this.width, this.height, 8);
+    ctx.fill();
+
     // Draw background (Body)
     ctx.fillStyle = t.widgetBg;
     ctx.beginPath();
