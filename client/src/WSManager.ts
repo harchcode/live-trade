@@ -63,6 +63,8 @@ export class WSManager {
         const numTrades = buffer.byteLength / TRADE_SIZE;
         let offset = 0;
 
+        const tradesBySymbol = new Map<number, Trade[]>();
+
         for (let i = 0; i < numTrades; i++) {
           const timestamp = view.getBigUint64(offset, true);
           offset += 8;
@@ -76,7 +78,15 @@ export class WSManager {
           offset += 8;
 
           const trade: Trade = { timestamp, symbolId, side, price, amount };
-          this.dispatchTrade(trade);
+          
+          if (!tradesBySymbol.has(symbolId)) {
+            tradesBySymbol.set(symbolId, []);
+          }
+          tradesBySymbol.get(symbolId)!.push(trade);
+        }
+        
+        for (const [symbolId, trades] of tradesBySymbol.entries()) {
+          this.dispatchTrades(symbolId, trades);
         }
       }
     };
@@ -127,11 +137,11 @@ export class WSManager {
     }
   }
 
-  private dispatchTrade(trade: Trade) {
-    const symbolListeners = this.listeners.get(trade.symbolId);
+  private dispatchTrades(symbolId: number, trades: Trade[]) {
+    const symbolListeners = this.listeners.get(symbolId);
     if (symbolListeners) {
       for (const listener of symbolListeners) {
-        listener(trade);
+        listener(trades);
       }
     }
   }

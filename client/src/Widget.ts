@@ -20,8 +20,8 @@ export class Widget {
     this.height = 420;
   }
 
-  public addTrade(trade: Trade) {
-    this.trades.unshift(trade);
+  public addTrades(newTrades: Trade[]) {
+    this.trades.unshift(...newTrades);
     if (this.trades.length > 100) {
       this.trades.length = 100;
     }

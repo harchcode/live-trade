@@ -76,7 +76,7 @@ if (savedLayout) {
       const widget = new Widget(symbolId, x, y);
       widget.width = w;
       widget.height = h;
-      const handler = (trade: Trade) => widget.addTrade(trade);
+      const handler = (trades: Trade[]) => widget.addTrades(trades);
       widgetHandlers.set(widget, handler);
       engine.addWidget(widget);
       wsManager.subscribe(widget.symbolId, handler);
@@ -104,7 +104,7 @@ addWidgetBtn.addEventListener("click", () => {
   const w = new Widget(defaultSymbolId, x, y);
 
   // Create a bound trade handler attached to the widget so we can unsubscribe correctly later
-  const handler = (trade: Trade) => w.addTrade(trade);
+  const handler = (trades: Trade[]) => w.addTrades(trades);
   widgetHandlers.set(w, handler);
 
   engine.addWidget(w);

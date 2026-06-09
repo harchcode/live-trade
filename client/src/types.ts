@@ -6,7 +6,7 @@ export interface Trade {
   amount: number;
 }
 
-export type TradeSubscriber = (trade: Trade) => void;
+export type TradeSubscriber = (trades: Trade[]) => void;
 
 const baseCoins = [
   "BTC",
