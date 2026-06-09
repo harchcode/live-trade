@@ -2,9 +2,9 @@ export const themes = {
   dark: {
     bg: '#0a0a0c',
     grid: 'rgba(255, 255, 255, 0.03)',
-    widgetBg: 'rgba(25, 25, 30, 0.85)',
+    widgetBg: '#19191e',
     widgetBorder: 'rgba(255, 255, 255, 0.1)',
-    widgetHeaderBg: 'rgba(30, 30, 35, 0.95)',
+    widgetHeaderBg: '#1e1e23',
     textPrimary: '#ffffff',
     textSecondary: '#8b8b9e',
     colorBuy: '#00e676',
@@ -19,9 +19,9 @@ export const themes = {
   light: {
     bg: '#f0f4f8',
     grid: 'rgba(0, 0, 0, 0.04)',
-    widgetBg: 'rgba(255, 255, 255, 0.9)',
+    widgetBg: '#ffffff',
     widgetBorder: 'rgba(0, 0, 0, 0.08)',
-    widgetHeaderBg: 'rgba(248, 250, 252, 0.95)',
+    widgetHeaderBg: '#f8fafc',
     textPrimary: '#1e293b',
     textSecondary: '#64748b',
     colorBuy: '#10b981', // green-500
