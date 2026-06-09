@@ -3,8 +3,8 @@ import { WSManager } from "./WSManager";
 import { Engine } from "./Engine";
 import { Widget } from "./Widget";
 import type { Trade, TradeSubscriber } from "./types";
-import { getSymbolName } from './types';
-import { applyThemeToDOM, toggleTheme } from './theme';
+import { getSymbolName } from "./types";
+import { applyThemeToDOM, toggleTheme } from "./theme";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative;">
@@ -30,6 +30,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Data: 0 KB</div>
     </div>
 
+    <!-- Bottom right footer -->
+    <div style="position: absolute; bottom: 20px; right: 20px; z-index: 10;">
+      <a href="https://github.com/harchcode/live-trade" target="_blank" style="color: var(--text-secondary, #8b8b9e); font-family: Inter, sans-serif; font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--hud-bg, rgba(30, 30, 35, 0.85)); border-radius: 6px; border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); backdrop-filter: blur(8px);">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+        View on GitHub
+      </a>
+    </div>
+
     <!-- Dropdowns (Hidden by default) -->
     <div id="symbol-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
       <!-- Options injected by JS -->
@@ -38,14 +48,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 `;
 
 applyThemeToDOM();
-document.getElementById('theme-toggle-btn')!.addEventListener('click', toggleTheme);
+document
+  .getElementById("theme-toggle-btn")!
+  .addEventListener("click", toggleTheme);
 
 const wsManager = new WSManager("ws://localhost:8080");
 const engine = new Engine("main-canvas", "ui-layer");
 engine.setWSManager(wsManager);
 
 const wsStatus = document.getElementById("ws-status")!;
-wsManager.onStatusChange = (status) => {
+wsManager.onStatusChange = status => {
   if (status === "connected") {
     wsStatus.innerText = "🟢 Connected";
     wsStatus.style.color = "var(--color-buy, #00e676)";
@@ -71,21 +83,29 @@ symbolDropdown.innerHTML = dropdownHtml;
 let activeTargetWidget: Widget | null = null;
 
 function saveLayout() {
-  const layout = engine.getWidgets().map(w => [
-    w.symbolId,
-    Math.round(w.x),
-    Math.round(w.y),
-    Math.round(w.width),
-    Math.round(w.height)
-  ]);
-  localStorage.setItem('widgets_layout', JSON.stringify(layout));
+  const layout = engine
+    .getWidgets()
+    .map(w => [
+      w.symbolId,
+      Math.round(w.x),
+      Math.round(w.y),
+      Math.round(w.width),
+      Math.round(w.height)
+    ]);
+  localStorage.setItem("widgets_layout", JSON.stringify(layout));
 }
 
 // Restore saved layout
-const savedLayout = localStorage.getItem('widgets_layout');
+const savedLayout = localStorage.getItem("widgets_layout");
 if (savedLayout) {
   try {
-    const layout = JSON.parse(savedLayout) as [number, number, number, number, number][];
+    const layout = JSON.parse(savedLayout) as [
+      number,
+      number,
+      number,
+      number,
+      number
+    ][];
     for (const [symbolId, x, y, w, h] of layout) {
       const widget = new Widget(symbolId, x, y);
       widget.width = w;
@@ -147,30 +167,30 @@ removeAllBtn.addEventListener("click", clearAllWidgets);
 const fillWidgetsBtn = document.getElementById("fill-widgets-btn")!;
 fillWidgetsBtn.addEventListener("click", () => {
   clearAllWidgets();
-  
+
   for (let i = 0; i < 50; i++) {
     const cols = Math.max(1, Math.floor(window.innerWidth / 360));
     const col = i % cols;
     const row = Math.floor(i / cols);
-    
+
     // Stagger slightly if there are many rows so they look like a deck of cards
-    const x = 20 + col * 350 + (row * 15);
+    const x = 20 + col * 350 + row * 15;
     const y = 80 + row * 40;
-    
+
     const w = new Widget(i, x, y);
-    
+
     const handler = (trades: Trade[]) => w.addTrades(trades);
     widgetHandlers.set(w, handler);
     engine.addWidget(w);
     wsManager.subscribe(w.symbolId, handler);
   }
-  
+
   widgetCounter.innerText = `50 / 50 Widgets`;
   saveLayout();
 });
 
 // Hide dropdowns when clicking anywhere outside them
-window.addEventListener("mousedown", (e) => {
+window.addEventListener("mousedown", e => {
   if (!(e.target as HTMLElement).closest(".dropdown")) {
     symbolDropdown.style.display = "none";
   }
@@ -184,7 +204,7 @@ engine.onSymbolClick = (widget, x, y) => {
   symbolDropdown.style.display = "block";
 };
 
-engine.onCloseClick = (widget) => {
+engine.onCloseClick = widget => {
   const handler = widgetHandlers.get(widget);
   if (handler) {
     wsManager.unsubscribe(widget.symbolId, handler);
