@@ -136,8 +136,8 @@ export class Widget {
           else ctx.lineTo(px, py);
         }
         
-        // Stroke the softer line (60% opacity to reduce eye strain)
-        ctx.strokeStyle = lineColor + "99";
+        // Stroke the softer line (33% opacity for a very subtle, non-distracting edge)
+        ctx.strokeStyle = lineColor + "55";
         ctx.lineWidth = 1.5;
         ctx.lineJoin = "round";
         ctx.stroke();
