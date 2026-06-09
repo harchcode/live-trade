@@ -59,6 +59,8 @@ export function applyThemeToDOM() {
   root.style.setProperty('--border', t.widgetBorder);
   root.style.setProperty('--text-primary', t.textPrimary);
   root.style.setProperty('--text-secondary', t.textSecondary);
+  root.style.setProperty('--color-buy', t.colorBuy);
+  root.style.setProperty('--color-sell', t.colorSell);
   root.style.setProperty('--dropdown-bg', t.dropdownBg);
   root.style.setProperty('--dropdown-hover', t.dropdownHover);
   root.style.setProperty('--shadow', t.shadow);

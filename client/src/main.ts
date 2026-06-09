@@ -17,6 +17,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div style="position: absolute; top: 20px; right: 20px; z-index: 10; display: flex; gap: 10px;">
       <button id="theme-toggle-btn" style="background: var(--hud-bg, rgba(30, 30, 35, 0.85)); color: var(--text-primary, #fff); border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); padding: 0 12px; border-radius: 6px; cursor: pointer; height: 36px; font-family: Inter, sans-serif; backdrop-filter: blur(8px);">Toggle Theme</button>
       <div id="widget-counter" style="color: var(--text-secondary, #8b8b9e); font-family: Inter, sans-serif; font-size: 14px; line-height: 36px;">0 / 50 Widgets</div>
+      <button id="remove-all-btn" style="background: var(--hud-bg, rgba(30, 30, 35, 0.85)); color: var(--color-sell, #ff1744); border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); padding: 0 16px; border-radius: 6px; font-weight: 600; cursor: pointer; height: 36px; font-family: Inter, sans-serif; backdrop-filter: blur(8px);">Remove All</button>
+      <button id="fill-widgets-btn" style="background: var(--hud-bg, rgba(30, 30, 35, 0.85)); color: var(--color-buy, #00e676); border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); padding: 0 16px; border-radius: 6px; font-weight: 600; cursor: pointer; height: 36px; font-family: Inter, sans-serif; backdrop-filter: blur(8px);">Fill 50</button>
       <button id="add-widget-btn" style="background: #00e676; color: #0a0a0c; border: none; padding: 0 16px; border-radius: 6px; font-weight: 600; cursor: pointer; height: 36px; font-family: Inter, sans-serif; box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);">+ Add Widget</button>
     </div>
 
@@ -111,6 +113,48 @@ addWidgetBtn.addEventListener("click", () => {
   wsManager.subscribe(w.symbolId, handler);
 
   widgetCounter.innerText = `${engine.getWidgets().length} / 50 Widgets`;
+});
+
+function clearAllWidgets() {
+  const widgets = engine.getWidgets();
+  for (const widget of [...widgets]) {
+    const handler = widgetHandlers.get(widget);
+    if (handler) {
+      wsManager.unsubscribe(widget.symbolId, handler);
+      widgetHandlers.delete(widget);
+    }
+    engine.removeWidget(widget);
+  }
+  widgetCounter.innerText = `0 / 50 Widgets`;
+  saveLayout();
+}
+
+const removeAllBtn = document.getElementById("remove-all-btn")!;
+removeAllBtn.addEventListener("click", clearAllWidgets);
+
+const fillWidgetsBtn = document.getElementById("fill-widgets-btn")!;
+fillWidgetsBtn.addEventListener("click", () => {
+  clearAllWidgets();
+  
+  for (let i = 0; i < 50; i++) {
+    const cols = Math.max(1, Math.floor(window.innerWidth / 360));
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    
+    // Stagger slightly if there are many rows so they look like a deck of cards
+    const x = 20 + col * 350 + (row * 15);
+    const y = 80 + row * 40;
+    
+    const w = new Widget(i, x, y);
+    
+    const handler = (trades: Trade[]) => w.addTrades(trades);
+    widgetHandlers.set(w, handler);
+    engine.addWidget(w);
+    wsManager.subscribe(w.symbolId, handler);
+  }
+  
+  widgetCounter.innerText = `50 / 50 Widgets`;
+  saveLayout();
 });
 
 // Hide dropdowns when clicking anywhere outside them
