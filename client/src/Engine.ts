@@ -7,6 +7,8 @@ export class Engine {
   private ctx: CanvasRenderingContext2D;
   private widgets: Widget[] = [];
   private dpr: number = 1;
+  private gridCache: HTMLCanvasElement | null = null;
+  private lastThemeName: string = '';
 
   // Interactivity State
   private activeWidget: Widget | null = null;
@@ -93,7 +95,33 @@ export class Engine {
     this.canvas.height = rect.height * this.dpr;
 
     this.ctx.scale(this.dpr, this.dpr);
+    this.updateGridCache(rect.width, rect.height);
     this.syncScrollOverlay(); // Update positions on resize
+  }
+
+  private updateGridCache(width: number, height: number) {
+    if (!this.gridCache) {
+      this.gridCache = document.createElement("canvas");
+    }
+    
+    // Scale cache canvas to match DPR for crisp rendering
+    this.gridCache.width = width * this.dpr;
+    this.gridCache.height = height * this.dpr;
+    const ctx = this.gridCache.getContext("2d")!;
+    ctx.scale(this.dpr, this.dpr);
+
+    const t = getTheme();
+    ctx.fillStyle = t.bg;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = t.grid;
+    for (let x = 0; x < width; x += 30) {
+      for (let y = 0; y < height; y += 30) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
 
   public addWidget(widget: Widget) {
@@ -302,19 +330,20 @@ export class Engine {
     }
 
     const rect = this.canvas.getBoundingClientRect();
-    const t = getTheme();
 
-    this.ctx.clearRect(0, 0, rect.width, rect.height);
-    this.ctx.fillStyle = t.bg;
-    this.ctx.fillRect(0, 0, rect.width, rect.height);
+    // Check for theme changes to regenerate cache
+    const currentThemeName = localStorage.getItem('theme') || 'dark';
+    if (this.lastThemeName !== currentThemeName) {
+      this.lastThemeName = currentThemeName;
+      this.updateGridCache(rect.width, rect.height);
+    }
 
-    this.ctx.fillStyle = t.grid;
-    for (let x = 0; x < rect.width; x += 30) {
-      for (let y = 0; y < rect.height; y += 30) {
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 1, 0, Math.PI * 2);
-        this.ctx.fill();
-      }
+    if (this.gridCache) {
+      this.ctx.drawImage(this.gridCache, 0, 0, rect.width, rect.height);
+    } else {
+      const t = getTheme();
+      this.ctx.fillStyle = t.bg;
+      this.ctx.fillRect(0, 0, rect.width, rect.height);
     }
 
     for (const widget of this.widgets) {

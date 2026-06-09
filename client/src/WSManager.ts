@@ -76,8 +76,23 @@ export class WSManager {
           offset += 8;
           const amount = view.getFloat64(offset, true);
           offset += 8;
+          
+          const timeStr = new Date(Number(timestamp)).toLocaleTimeString([], {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          });
+          const priceStr = price.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+          const amountStr = amount.toLocaleString(undefined, {
+            minimumFractionDigits: 4,
+            maximumFractionDigits: 4
+          });
 
-          const trade: Trade = { timestamp, symbolId, side, price, amount };
+          const trade: Trade = { timestamp, symbolId, side, price, amount, timeStr, priceStr, amountStr };
           
           if (!tradesBySymbol.has(symbolId)) {
             tradesBySymbol.set(symbolId, []);

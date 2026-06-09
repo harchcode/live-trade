@@ -4,6 +4,9 @@ export interface Trade {
   side: number;
   price: number;
   amount: number;
+  timeStr?: string;
+  priceStr?: string;
+  amountStr?: string;
 }
 
 export type TradeSubscriber = (trades: Trade[]) => void;

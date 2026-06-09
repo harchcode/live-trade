@@ -73,13 +73,9 @@ export class Widget {
 
     // Draw background (Body)
     ctx.fillStyle = t.widgetBg;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 4;
     ctx.beginPath();
     ctx.roundRect(this.x, this.y, this.width, this.height, 8);
     ctx.fill();
-    ctx.shadowColor = "transparent"; // Reset shadow for other elements
 
     // Draw Header Fill
     ctx.fillStyle = t.widgetHeaderBg;
@@ -137,14 +133,8 @@ export class Widget {
       }
 
       // Time
-      const timeStr = new Date(Number(trade.timestamp)).toLocaleTimeString([], {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      });
       ctx.fillStyle = t.textSecondary;
-      ctx.fillText(timeStr, this.x + 16, drawY);
+      ctx.fillText(trade.timeStr || "", this.x + 16, drawY);
 
       // Side
       ctx.fillStyle = trade.side === 1 ? t.colorSell : t.colorBuy;
@@ -154,19 +144,11 @@ export class Widget {
       // Price
       ctx.fillStyle = t.textPrimary;
       ctx.textAlign = "right";
-      const priceStr = trade.price.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-      ctx.fillText(priceStr, this.x + 245, drawY);
+      ctx.fillText(trade.priceStr || "", this.x + 245, drawY);
 
       // Amount
       ctx.fillStyle = t.textSecondary;
-      const amountStr = trade.amount.toLocaleString(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-      });
-      ctx.fillText(amountStr, this.x + this.width - 16, drawY);
+      ctx.fillText(trade.amountStr || "", this.x + this.width - 16, drawY);
 
       ctx.textAlign = "left";
       drawY += 24;
