@@ -41,6 +41,17 @@ export class Widget {
     }
   }
 
+  public isHit(mouseX: number, mouseY: number): boolean {
+    return mouseX >= this.x && mouseX <= this.x + this.width &&
+           mouseY >= this.y && mouseY <= this.y + this.height;
+  }
+
+  public isHitResize(mouseX: number, mouseY: number): boolean {
+    const handleSize = 15;
+    return mouseX >= this.x + this.width - handleSize && mouseX <= this.x + this.width &&
+           mouseY >= this.y + this.height - handleSize && mouseY <= this.y + this.height;
+  }
+
   public draw(ctx: CanvasRenderingContext2D) {
     // Setup for glassmorphism-like clean rendering
     ctx.save();
