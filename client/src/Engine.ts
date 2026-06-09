@@ -1,5 +1,6 @@
 import { Widget } from "./Widget";
 import type { WSManager } from "./WSManager";
+import { getTheme } from "./theme";
 
 export class Engine {
   private canvas: HTMLCanvasElement;
@@ -300,12 +301,13 @@ export class Engine {
     }
 
     const rect = this.canvas.getBoundingClientRect();
-
+    const t = getTheme();
+    
     this.ctx.clearRect(0, 0, rect.width, rect.height);
-    this.ctx.fillStyle = "#0a0a0c";
+    this.ctx.fillStyle = t.bg;
     this.ctx.fillRect(0, 0, rect.width, rect.height);
 
-    this.ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+    this.ctx.fillStyle = t.grid;
     for (let x = 0; x < rect.width; x += 30) {
       for (let y = 0; y < rect.height; y += 30) {
         this.ctx.beginPath();

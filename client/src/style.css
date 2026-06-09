@@ -2,7 +2,7 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: #0a0a0c;
+  background: var(--bg, #0a0a0c);
 }
 
 #app {
@@ -15,7 +15,7 @@ body {
 /* Dropdown & Scrollbar Styles */
 .dropdown-item {
   padding: 8px 16px;
-  color: #fff;
+  color: var(--text-primary, #fff);
   font-family: Inter, sans-serif;
   font-size: 13px;
   cursor: pointer;
@@ -24,7 +24,7 @@ body {
 }
 
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--dropdown-hover, rgba(255,255,255,0.1));
 }
 
 .widget-scroll-overlay::-webkit-scrollbar {
@@ -34,17 +34,17 @@ body {
   background: transparent;
 }
 .widget-scroll-overlay::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--scroll-thumb, rgba(255,255,255,0.2));
   border-radius: 3px;
 }
 .widget-scroll-overlay:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--scroll-thumb-hover, rgba(255,255,255,0.4));
 }
 
 .dropdown::-webkit-scrollbar {
   width: 4px;
 }
 .dropdown::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--scroll-thumb, rgba(255,255,255,0.3));
   border-radius: 2px;
 }

@@ -3,9 +3,10 @@ import { WSManager } from "./WSManager";
 import { Engine } from "./Engine";
 import { Widget } from "./Widget";
 import type { Trade, TradeSubscriber } from "./types";
+import { applyThemeToDOM, toggleTheme } from './theme';
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative; background: #0a0a0c;">
+  <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative;">
     <canvas id="main-canvas" style="display: block; position: absolute; z-index: 1;"></canvas>
     
     <!-- Transparent UI layer for scrolling overlay divs -->
@@ -13,29 +14,33 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     
     <!-- Top HUD for adding widgets -->
     <div style="position: absolute; top: 20px; right: 20px; z-index: 10; display: flex; gap: 10px;">
-      <div id="widget-counter" style="color: #8b8b9e; font-family: Inter, sans-serif; font-size: 14px; line-height: 36px;">0 / 50 Widgets</div>
+      <button id="theme-toggle-btn" style="background: var(--hud-bg, rgba(30, 30, 35, 0.85)); color: var(--text-primary, #fff); border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); padding: 0 12px; border-radius: 6px; cursor: pointer; height: 36px; font-family: Inter, sans-serif; backdrop-filter: blur(8px);">Toggle Theme</button>
+      <div id="widget-counter" style="color: var(--text-secondary, #8b8b9e); font-family: Inter, sans-serif; font-size: 14px; line-height: 36px;">0 / 50 Widgets</div>
       <button id="add-widget-btn" style="background: #00e676; color: #0a0a0c; border: none; padding: 0 16px; border-radius: 6px; font-weight: 600; cursor: pointer; height: 36px; font-family: Inter, sans-serif; box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);">+ Add Widget</button>
     </div>
 
     <!-- Top left performance HUD -->
-    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; background: rgba(30, 30, 35, 0.85); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);">
-      <div id="fps-counter" style="color: #00e676; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
-      <div id="mem-counter" style="color: #8b8b9e; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Mem: -- MB</div>
-      <div id="data-counter" style="color: #8b8b9e; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Data: 0 KB</div>
+    <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; flex-direction: column; gap: 4px; background: var(--hud-bg, rgba(30, 30, 35, 0.85)); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border, rgba(255, 255, 255, 0.1)); backdrop-filter: blur(8px);">
+      <div id="fps-counter" style="color: var(--color-buy, #00e676); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
+      <div id="mem-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Mem: -- MB</div>
+      <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 12px;">Data: 0 KB</div>
     </div>
 
     <!-- Dropdowns (Hidden by default) -->
-    <div id="symbol-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: #1e1e25; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px rgba(0,0,0,0.5);">
+    <div id="symbol-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
       <!-- Options injected by JS -->
     </div>
 
-    <div id="filter-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: #1e1e25; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px; box-shadow: 0 8px 16px rgba(0,0,0,0.5);">
+    <div id="filter-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
       <div class="dropdown-item" data-val="0">ALL</div>
       <div class="dropdown-item" data-val="1">BUY</div>
       <div class="dropdown-item" data-val="2">SELL</div>
     </div>
   </div>
 `;
+
+applyThemeToDOM();
+document.getElementById('theme-toggle-btn')!.addEventListener('click', toggleTheme);
 
 const wsManager = new WSManager("ws://localhost:8080");
 const engine = new Engine("main-canvas", "ui-layer");

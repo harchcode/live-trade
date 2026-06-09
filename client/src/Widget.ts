@@ -1,4 +1,5 @@
 import type { Trade } from "./types";
+import { getTheme } from "./theme";
 
 export class Widget {
   public id: string;
@@ -10,15 +11,6 @@ export class Widget {
   public filter: number; // 0 = ALL, 1 = BUY, 2 = SELL
   public trades: Trade[] = [];
   public scrollY: number = 0;
-
-  // Design Aesthetics - Premium Dark Theme
-  private bg = "rgba(25, 25, 30, 0.85)";
-  private border = "rgba(255, 255, 255, 0.1)";
-  private headerBg = "rgba(30, 30, 35, 0.95)";
-  private textPrimary = "#ffffff";
-  private textSecondary = "#8b8b9e";
-  private colorBuy = "#00e676"; // Vibrant green
-  private colorSell = "#ff1744"; // Vibrant red
 
   constructor(symbolId: number, x: number, y: number) {
     this.id = Math.random().toString(36).substring(2, 9);
@@ -79,11 +71,13 @@ export class Widget {
   }
 
   public draw(ctx: CanvasRenderingContext2D) {
+    const t = getTheme();
+    
     // Setup for glassmorphism-like clean rendering
     ctx.save();
 
     // Draw background
-    ctx.fillStyle = this.bg;
+    ctx.fillStyle = t.widgetBg;
     ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 4;
@@ -93,13 +87,13 @@ export class Widget {
     ctx.shadowColor = "transparent"; // Reset shadow for other elements
 
     // Draw border
-    ctx.strokeStyle = this.border;
+    ctx.strokeStyle = t.widgetBorder;
     ctx.lineWidth = 1;
     ctx.stroke();
 
     // Draw Header
     const headerHeight = 44;
-    ctx.fillStyle = this.headerBg;
+    ctx.fillStyle = t.widgetHeaderBg;
     ctx.beginPath();
     ctx.roundRect(this.x, this.y, this.width, headerHeight, [8, 8, 0, 0]);
     ctx.fill();
@@ -110,8 +104,8 @@ export class Widget {
     ctx.lineTo(this.x + this.width, this.y + headerHeight);
     ctx.stroke();
 
-    // Header Text (Symbol Name placeholder for now)
-    ctx.fillStyle = this.textPrimary;
+    // Header Text
+    ctx.fillStyle = t.textPrimary;
     ctx.font = "600 15px Inter, sans-serif";
     ctx.textBaseline = "middle";
     ctx.fillText(
@@ -121,7 +115,7 @@ export class Widget {
     );
 
     // Filter text indicator
-    ctx.fillStyle = this.textSecondary;
+    ctx.fillStyle = t.textSecondary;
     ctx.font = "12px Inter, sans-serif";
     ctx.textAlign = "right";
     const filterText =
@@ -165,16 +159,16 @@ export class Widget {
         minute: "2-digit",
         second: "2-digit"
       });
-      ctx.fillStyle = this.textSecondary;
+      ctx.fillStyle = t.textSecondary;
       ctx.fillText(timeStr, this.x + 16, drawY);
 
       // Side
-      ctx.fillStyle = trade.side === 1 ? this.colorSell : this.colorBuy;
+      ctx.fillStyle = trade.side === 1 ? t.colorSell : t.colorBuy;
       const sideText = trade.side === 1 ? "SELL" : "BUY ";
       ctx.fillText(sideText, this.x + 100, drawY);
 
       // Price
-      ctx.fillStyle = this.textPrimary;
+      ctx.fillStyle = t.textPrimary;
       ctx.textAlign = "right";
       const priceStr = trade.price.toLocaleString(undefined, {
         minimumFractionDigits: 2,
@@ -183,7 +177,7 @@ export class Widget {
       ctx.fillText(priceStr, this.x + 220, drawY);
 
       // Amount
-      ctx.fillStyle = this.textSecondary;
+      ctx.fillStyle = t.textSecondary;
       const amountStr = trade.amount.toLocaleString(undefined, {
         minimumFractionDigits: 4,
         maximumFractionDigits: 4
