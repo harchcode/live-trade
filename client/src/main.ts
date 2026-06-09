@@ -30,47 +30,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `;
 
-// Inject basic dropdown & scrollbar styles dynamically
-const style = document.createElement('style');
-style.textContent = `
-  .dropdown-item {
-    padding: 8px 16px;
-    color: #fff;
-    font-family: Inter, sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background 0.1s;
-  }
-  .dropdown-item:hover {
-    background: rgba(255,255,255,0.1);
-  }
-  
-  /* Custom scrollbar for the UI layer transparent divs */
-  .widget-scroll-overlay::-webkit-scrollbar {
-    width: 6px;
-  }
-  .widget-scroll-overlay::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .widget-scroll-overlay::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
-  }
-  .widget-scroll-overlay:hover::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.4);
-  }
-  
-  /* Dropdown scrollbar */
-  .dropdown::-webkit-scrollbar {
-    width: 4px;
-  }
-  .dropdown::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
-  }
-`;
-document.head.appendChild(style);
 
 const wsManager = new WSManager('ws://localhost:8080');
 const engine = new Engine('main-canvas', 'ui-layer');
