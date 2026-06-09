@@ -98,6 +98,21 @@ export class Engine {
       widget.scrollY = div.scrollTop;
     });
 
+    div.addEventListener('mousedown', (e) => {
+      // If clicking on the native scrollbar, let the browser handle it
+      if (e.offsetX >= div.clientWidth) {
+        return;
+      }
+      
+      // Otherwise, forward the click to the Canvas to handle proper z-index and drag logic
+      const canvasEvent = new MouseEvent('mousedown', {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        bubbles: true
+      });
+      this.canvas.dispatchEvent(canvasEvent);
+    });
+
     this.uiLayer.appendChild(div);
     this.scrollOverlays.set(widget, div);
     this.positionScrollOverlay(widget, div);
