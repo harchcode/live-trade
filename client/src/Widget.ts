@@ -64,9 +64,9 @@ export class Widget {
     );
   }
 
-  public draw(ctx: CanvasRenderingContext2D) {
+  public draw(ctx: CanvasRenderingContext2D, isActive: boolean = false) {
     const t = getTheme();
-
+    
     // Setup for glassmorphism-like clean rendering
     ctx.save();
 
@@ -81,8 +81,8 @@ export class Widget {
     ctx.shadowColor = "transparent"; // Reset shadow for other elements
 
     // Draw border
-    ctx.strokeStyle = t.widgetBorder;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = isActive ? t.widgetBorderActive : t.widgetBorder;
+    ctx.lineWidth = isActive ? 2 : 1;
     ctx.stroke();
 
     // Draw Header

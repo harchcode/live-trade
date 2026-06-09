@@ -16,7 +16,6 @@ export class Engine {
   private dragOffsetY = 0;
   private dragStartX = 0;
   private dragStartY = 0;
-  private zIndexCounter = 10;
 
   // Performance Monitoring
   private lastTime = performance.now();
@@ -29,7 +28,9 @@ export class Engine {
 
   // DOM Overlays
   private uiLayer: HTMLDivElement;
-  private scrollOverlays = new Map<Widget, HTMLDivElement>();
+  private scrollOverlay: HTMLDivElement;
+  private scrollContent: HTMLDivElement;
+  private isProgrammaticScroll = false;
 
   // Callbacks
   public onSymbolClick?: (widget: Widget, x: number, y: number) => void;
@@ -44,6 +45,38 @@ export class Engine {
     this.fpsEl = document.getElementById("fps-counter");
     this.memEl = document.getElementById("mem-counter");
     this.dataEl = document.getElementById("data-counter");
+
+    // Initialize Singleton Scroll Overlay FIRST before resize triggers syncScrollOverlay
+    this.scrollOverlay = document.createElement("div");
+    this.scrollOverlay.style.position = "absolute";
+    this.scrollOverlay.style.overflowY = "auto";
+    this.scrollOverlay.style.overflowX = "hidden";
+    this.scrollOverlay.style.pointerEvents = "auto";
+    this.scrollOverlay.style.display = "none";
+    this.scrollOverlay.className = "widget-scroll-overlay";
+
+    this.scrollContent = document.createElement("div");
+    this.scrollContent.style.width = "100%";
+    this.scrollOverlay.appendChild(this.scrollContent);
+
+    this.scrollOverlay.addEventListener("scroll", () => {
+      if (this.isProgrammaticScroll) return;
+      if (this.activeWidget) {
+        this.activeWidget.scrollY = this.scrollOverlay.scrollTop;
+      }
+    });
+
+    this.scrollOverlay.addEventListener("mousedown", e => {
+      if (e.offsetX >= this.scrollOverlay.clientWidth) return;
+      const canvasEvent = new MouseEvent("mousedown", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        bubbles: true
+      });
+      this.canvas.dispatchEvent(canvasEvent);
+    });
+
+    this.uiLayer.appendChild(this.scrollOverlay);
 
     this.resize();
     window.addEventListener("resize", () => this.resize());
@@ -70,12 +103,13 @@ export class Engine {
     this.canvas.height = rect.height * this.dpr;
 
     this.ctx.scale(this.dpr, this.dpr);
-    this.showAllScrollOverlays(); // Update positions on resize
+    this.syncScrollOverlay(); // Update positions on resize
   }
 
   public addWidget(widget: Widget) {
     this.widgets.push(widget);
-    this.createScrollOverlay(widget);
+    this.activeWidget = widget;
+    this.syncScrollOverlay();
     this.onLayoutChange?.();
   }
 
@@ -83,10 +117,9 @@ export class Engine {
     const idx = this.widgets.indexOf(widget);
     if (idx > -1) {
       this.widgets.splice(idx, 1);
-      const div = this.scrollOverlays.get(widget);
-      if (div) {
-        div.remove();
-        this.scrollOverlays.delete(widget);
+      if (this.activeWidget === widget) {
+        this.activeWidget = null;
+        this.syncScrollOverlay();
       }
       this.onLayoutChange?.();
     }
@@ -98,66 +131,28 @@ export class Engine {
 
   // --- DOM SCROLL OVERLAYS ---
 
-  private createScrollOverlay(widget: Widget) {
-    const div = document.createElement("div");
-    div.style.position = "absolute";
-    div.style.overflowY = "auto";
-    div.style.overflowX = "hidden";
-    div.style.pointerEvents = "auto"; // allow scrolling interaction
-    div.style.zIndex = (this.zIndexCounter++).toString(); // Start with proper z-index
+  private syncScrollOverlay() {
+    if (!this.activeWidget) {
+      this.scrollOverlay.style.display = "none";
+      return;
+    }
 
-    // Webkit specific styling to hide scrollbars until hover (or style natively)
-    div.className = "widget-scroll-overlay";
-
-    // A tall transparent div to force scrolling logic
-    // Precisely calculated for 100 trades + exactly 20px bottom padding
-    const content = document.createElement("div");
-    content.style.width = "100%";
-    content.style.height = "2408px";
-    div.appendChild(content);
-
-    div.addEventListener("scroll", () => {
-      widget.scrollY = div.scrollTop;
-    });
-
-    div.addEventListener("mousedown", e => {
-      // If clicking on the native scrollbar, let the browser handle it
-      if (e.offsetX >= div.clientWidth) {
-        return;
-      }
-
-      // Otherwise, forward the click to the Canvas to handle proper z-index and drag logic
-      const canvasEvent = new MouseEvent("mousedown", {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        bubbles: true
-      });
-      this.canvas.dispatchEvent(canvasEvent);
-    });
-
-    this.uiLayer.appendChild(div);
-    this.scrollOverlays.set(widget, div);
-    this.positionScrollOverlay(widget, div);
-  }
-
-  private positionScrollOverlay(widget: Widget, div: HTMLDivElement) {
     const headerHeight = 44;
-    div.style.left = `${widget.x}px`;
-    div.style.top = `${widget.y + headerHeight}px`;
-    div.style.width = `${widget.width}px`;
-    div.style.height = `${widget.height - headerHeight - 15}px`; // Leave bottom 15px for resize handle
-    div.style.display = "block";
-  }
+    this.scrollOverlay.style.left = `${this.activeWidget.x}px`;
+    this.scrollOverlay.style.top = `${this.activeWidget.y + headerHeight}px`;
+    this.scrollOverlay.style.width = `${this.activeWidget.width}px`;
+    this.scrollOverlay.style.height = `${this.activeWidget.height - headerHeight - 15}px`; // Leave bottom 15px for resize handle
+    this.scrollOverlay.style.display = "block";
 
-  private hideAllScrollOverlays() {
-    this.scrollOverlays.forEach(div => (div.style.display = "none"));
-  }
+    const tradesHeight = this.activeWidget.trades.length * 24 + 20;
+    const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
+    if (this.scrollContent.style.height !== newHeightStr) {
+      this.scrollContent.style.height = newHeightStr;
+    }
 
-  private showAllScrollOverlays() {
-    this.widgets.forEach(w => {
-      const div = this.scrollOverlays.get(w);
-      if (div) this.positionScrollOverlay(w, div);
-    });
+    this.isProgrammaticScroll = true;
+    this.scrollOverlay.scrollTop = this.activeWidget.scrollY;
+    this.isProgrammaticScroll = false;
   }
 
   // --- INTERACTION LOGIC ---
@@ -175,7 +170,7 @@ export class Engine {
         this.activeWidget = widget;
         this.isResizing = true;
         this.canvas.style.cursor = "nwse-resize";
-        this.hideAllScrollOverlays(); // Hide to prevent jitter
+        this.scrollOverlay.style.display = "none"; // Hide to prevent jitter
         return;
       }
 
@@ -188,10 +183,14 @@ export class Engine {
         this.dragStartX = x;
         this.dragStartY = y;
         this.canvas.style.cursor = "grabbing";
-        this.hideAllScrollOverlays(); // Hide to prevent jitter
+        this.scrollOverlay.style.display = "none"; // Hide to prevent jitter
         return;
       }
     }
+
+    // Clicked background, clear active widget
+    this.activeWidget = null;
+    this.syncScrollOverlay();
   };
 
   private onMouseMove = (e: MouseEvent) => {
@@ -253,8 +252,7 @@ export class Engine {
 
       this.isDragging = false;
       this.isResizing = false;
-      this.activeWidget = null;
-      this.showAllScrollOverlays(); // Put DOM overlays back over canvas exactly matching new bounds
+      this.syncScrollOverlay(); // Put DOM overlays back over canvas exactly matching new bounds
       this.onLayoutChange?.();
     }
   };
@@ -262,12 +260,6 @@ export class Engine {
   private bringToFront(index: number) {
     const widget = this.widgets.splice(index, 1)[0];
     this.widgets.push(widget);
-
-    // Crucial: Update DOM overlay z-index so it doesn't block clicks to newer widgets
-    const div = this.scrollOverlays.get(widget);
-    if (div) {
-      div.style.zIndex = (this.zIndexCounter++).toString();
-    }
   }
 
   // --- RENDER LOOP ---
@@ -323,13 +315,21 @@ export class Engine {
     }
 
     for (const widget of this.widgets) {
+      if (widget === this.activeWidget) {
+        const tradesHeight = widget.trades.length * 24 + 20;
+        const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
+        if (this.scrollContent.style.height !== newHeightStr) {
+          this.scrollContent.style.height = newHeightStr;
+        }
+      }
+
       if (
         widget.x + widget.width > 0 &&
         widget.x < rect.width &&
         widget.y + widget.height > 0 &&
         widget.y < rect.height
       ) {
-        widget.draw(this.ctx);
+        widget.draw(this.ctx, widget === this.activeWidget);
       }
     }
 
