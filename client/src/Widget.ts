@@ -46,13 +46,13 @@ export class Widget {
     );
   }
 
-  public isHitHeaderSymbol(mouseX: number, mouseY: number): boolean {
-    return (
-      mouseX >= this.x &&
-      mouseX <= this.x + this.width - 60 &&
-      mouseY >= this.y &&
-      mouseY <= this.y + 44
-    );
+  public isHitHeaderSymbol(mouseX: number, mouseY: number, ctx?: CanvasRenderingContext2D): boolean {
+    const titleWidth = ctx ? ctx.measureText(getSymbolName(this.symbolId)).width + 20 : 100;
+    return mouseX >= this.x + 10 && mouseX <= this.x + 10 + titleWidth && mouseY >= this.y + 10 && mouseY <= this.y + 34;
+  }
+
+  public isHitHeader(mouseX: number, mouseY: number): boolean {
+    return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + 44;
   }
 
   public isHitHeaderClose(mouseX: number, mouseY: number): boolean {

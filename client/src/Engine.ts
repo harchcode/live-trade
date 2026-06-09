@@ -66,16 +66,6 @@ export class Engine {
       }
     });
 
-    this.scrollOverlay.addEventListener("mousedown", e => {
-      if (e.offsetX >= this.scrollOverlay.clientWidth) return;
-      const canvasEvent = new MouseEvent("mousedown", {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        bubbles: true
-      });
-      this.canvas.dispatchEvent(canvasEvent);
-    });
-
     this.uiLayer.appendChild(this.scrollOverlay);
 
     this.resize();
@@ -165,29 +155,39 @@ export class Engine {
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
 
-      if (widget.isHitResize(x, y)) {
-        this.bringToFront(i);
-        this.activeWidget = widget;
-        this.isResizing = true;
-        this.canvas.style.cursor = "nwse-resize";
-        this.scrollOverlay.style.display = "none"; // Hide to prevent jitter
-        return;
-      }
+      if (widget.isHit(x, y) || widget.isHitResize(x, y)) {
+        if (this.activeWidget !== widget) {
+          // Focus inactive widget and immediately return
+          this.bringToFront(i);
+          this.activeWidget = widget;
+          this.syncScrollOverlay();
+          return;
+        }
 
-      if (widget.isHit(x, y)) {
-        this.bringToFront(i);
-        this.activeWidget = widget;
-        this.isDragging = true;
-        this.dragOffsetX = x - widget.x;
-        this.dragOffsetY = y - widget.y;
-        this.dragStartX = x;
-        this.dragStartY = y;
-        this.canvas.style.cursor = "grabbing";
-        this.scrollOverlay.style.display = "none"; // Hide to prevent jitter
+        // Active widget interactions
+        if (widget.isHitResize(x, y)) {
+          this.isResizing = true;
+          this.canvas.style.cursor = "nwse-resize";
+          this.scrollOverlay.style.display = "none";
+          return;
+        }
+
+        if (widget.isHitHeader(x, y)) {
+          this.isDragging = true;
+          this.dragOffsetX = x - widget.x;
+          this.dragOffsetY = y - widget.y;
+          this.dragStartX = x;
+          this.dragStartY = y;
+          this.canvas.style.cursor = "grabbing";
+          this.scrollOverlay.style.display = "none";
+          return;
+        }
+        
+        // Hit the active widget body (e.g. bottom gap), do nothing
         return;
       }
     }
-
+    
     // Clicked background, clear active widget
     this.activeWidget = null;
     this.syncScrollOverlay();
@@ -208,23 +208,26 @@ export class Engine {
         this.activeWidget.x = x - this.dragOffsetX;
         this.activeWidget.y = y - this.dragOffsetY;
       }
-      return;
+      if (this.isResizing || this.isDragging) return;
     }
 
     let cursor = "default";
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
-      if (widget.isHitResize(x, y)) {
-        cursor = "nwse-resize";
-        break;
-      }
-      if (widget.isHitHeaderClose(x, y) || widget.isHitHeaderSymbol(x, y)) {
-        cursor = "pointer";
-        break;
-      }
-      if (widget.isHit(x, y)) {
-        cursor = "grab";
-        break;
+      if (widget.isHit(x, y) || widget.isHitResize(x, y)) {
+        if (widget === this.activeWidget) {
+          if (widget.isHitResize(x, y)) {
+            cursor = "nwse-resize";
+          } else if (widget.isHitHeaderClose(x, y) || widget.isHitHeaderSymbol(x, y)) {
+            cursor = "pointer";
+          } else if (widget.isHitHeader(x, y)) {
+            cursor = "grab";
+          } else {
+            cursor = "default";
+          }
+        }
+        // If it's an inactive widget, keep cursor="default" (don't show pointer/grab)
+        break; // Top-most widget found, stop checking below
       }
     }
     this.canvas.style.cursor = cursor;
