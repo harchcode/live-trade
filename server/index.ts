@@ -122,9 +122,9 @@ setInterval(() => {
     const extClient = client as ExtWebSocket;
     if (extClient.readyState !== WebSocket.OPEN) return;
 
-    // Filter trades for this specific client's subscriptions
+    // Filter trades for this specific client's subscriptions, or clients subscribed to ALL (65535)
     const clientTrades = tradesToProcess.filter(t =>
-      extClient.subscriptions.has(t.symbolId)
+      extClient.subscriptions.has(t.symbolId) || extClient.subscriptions.has(65535)
     );
 
     if (clientTrades.length === 0) return;

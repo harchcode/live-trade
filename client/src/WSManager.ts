@@ -103,7 +103,20 @@ export class WSManager {
         }
         
         for (const [symbolId, trades] of tradesBySymbol.entries()) {
-          this.dispatchTrades(symbolId, trades);
+          // Dispatch to specific symbol listeners
+          const symbolListeners = this.listeners.get(symbolId);
+          if (symbolListeners) {
+            for (const listener of symbolListeners) {
+              listener(trades);
+            }
+          }
+          // Dispatch to "ALL COINS" wildcard listeners
+          const allListeners = this.listeners.get(65535);
+          if (allListeners) {
+            for (const listener of allListeners) {
+              listener(trades);
+            }
+          }
         }
       }
     };

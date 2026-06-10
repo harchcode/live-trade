@@ -163,15 +163,11 @@ export class Widget {
     ctx.lineWidth = isActive ? 2 : 1;
     ctx.stroke();
 
-    // Header Text
+    // Draw Title (Symbol)
     ctx.fillStyle = t.textPrimary;
-    ctx.font = "600 15px Inter, sans-serif";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
-      getSymbolName(this.symbolId),
-      this.x + 16,
-      this.y + headerHeight / 2
-    );
+    ctx.font = "bold 15px Inter, sans-serif";
+    const title = this.symbolId === 65535 ? "ALL COINS" : getSymbolName(this.symbolId);
+    ctx.fillText(title, this.x + 16, this.y + 22);
 
     // Draw close button 'x' at right side only if active
     if (isActive) {
@@ -211,10 +207,20 @@ export class Widget {
       ctx.fillStyle = t.textSecondary;
       ctx.fillText(trade.timeStr || "", this.x + 16, drawY);
 
+      let sideX = this.x + 90;
+
+      // Symbol Name (Only for ALL COINS widget)
+      if (this.symbolId === 65535) {
+        ctx.fillStyle = t.textPrimary;
+        const name = getSymbolName(trade.symbolId).split('/')[0]; // Just show 'BTC' instead of 'BTC/IDR' to save space
+        ctx.fillText(name, this.x + 85, drawY);
+        sideX = this.x + 135;
+      }
+
       // Side
       ctx.fillStyle = trade.side === 1 ? t.colorSell : t.colorBuy;
       const sideText = trade.side === 1 ? "SELL" : "BUY ";
-      ctx.fillText(sideText, this.x + 90, drawY);
+      ctx.fillText(sideText, sideX, drawY);
 
       // Price
       ctx.fillStyle = t.textPrimary;

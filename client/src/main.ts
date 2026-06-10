@@ -73,12 +73,24 @@ const symbolDropdown = document.getElementById("symbol-dropdown")!;
 
 const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
-// Generate 50 symbols for the dropdown to match the server mock
+// Render Dropdown
+const allOption = document.createElement("div");
+allOption.innerText = "ALL COINS";
+allOption.classList.add("dropdown-item");
+allOption.setAttribute("data-id", "65535");
+allOption.style.padding = "8px 12px";
+allOption.style.cursor = "pointer";
+allOption.style.color = "var(--text-primary, #fff)";
+allOption.style.fontWeight = "bold";
+allOption.addEventListener("mouseenter", () => allOption.style.background = "var(--dropdown-hover, rgba(255, 255, 255, 0.1))");
+allOption.addEventListener("mouseleave", () => allOption.style.background = "transparent");
+symbolDropdown.appendChild(allOption);
+
 let dropdownHtml = "";
 for (let i = 0; i < 50; i++) {
   dropdownHtml += `<div class="dropdown-item" data-id="${i}">${getSymbolName(i)}</div>`;
 }
-symbolDropdown.innerHTML = dropdownHtml;
+symbolDropdown.insertAdjacentHTML("beforeend", dropdownHtml);
 
 let activeTargetWidget: Widget | null = null;
 
