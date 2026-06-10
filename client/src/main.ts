@@ -77,7 +77,7 @@ const widgetHandlers = new Map<Widget, TradeSubscriber>();
 
 // Render Dropdown
 const allOption = document.createElement("div");
-allOption.innerText = "ALL COINS";
+allOption.innerText = "ALL STOCKS";
 allOption.classList.add("dropdown-item");
 allOption.setAttribute("data-id", APP_CONFIG.WILDCARD_SYMBOL_ID.toString());
 allOption.style.padding = "8px 12px";
@@ -247,7 +247,7 @@ symbolDropdown.addEventListener("mousedown", e => {
         // Subscribe new
         activeTargetWidget.symbolId = newId;
         
-        // Auto-expand if converting to ALL COINS and currently too small
+        // Auto-expand if converting to ALL STOCKS and currently too small
         if (newId === APP_CONFIG.WILDCARD_SYMBOL_ID && activeTargetWidget.width < WIDGET_LAYOUT.MIN_WIDTH_WILDCARD) {
           activeTargetWidget.width = WIDGET_LAYOUT.MIN_WIDTH_WILDCARD;
         }

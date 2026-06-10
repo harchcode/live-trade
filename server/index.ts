@@ -97,8 +97,8 @@ setInterval(() => {
       timestamp: BigInt(Date.now()),
       symbolId,
       side: Math.random() > 0.5 ? 1 : 0, // 1 = SELL, 0 = BUY
-      price: Math.random() * 1000000000,
-      amount: Math.random() * 10
+      price: Math.random() * 300 + 10, // Stock prices between 10 and 310
+      amount: Math.floor(Math.random() * 100) + 1 // Whole numbers (lots)
     });
   }
 }, CONFIG.DATA_GEN_INTERVAL_MS);

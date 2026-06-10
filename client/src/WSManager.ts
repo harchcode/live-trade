@@ -91,8 +91,8 @@ export class WSManager {
             maximumFractionDigits: 2
           });
           const amountStr = amount.toLocaleString(undefined, {
-            minimumFractionDigits: 4,
-            maximumFractionDigits: 4
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
           });
 
           const trade: Trade = {

@@ -169,7 +169,7 @@ export class Widget {
     ctx.fillStyle = t.textPrimary;
     ctx.font = "bold 15px Inter, sans-serif";
     ctx.textBaseline = "middle";
-    const title = this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? "ALL COINS" : getSymbolName(this.symbolId);
+    const title = this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? "ALL STOCKS" : getSymbolName(this.symbolId);
     ctx.fillText(title, this.x + COLUMN_POSITIONS.TIME_X, this.y + headerHeight / 2);
     ctx.textBaseline = "alphabetic"; // Reset to default for the rest of canvas
 
@@ -213,10 +213,10 @@ export class Widget {
 
       let sideX = this.x + COLUMN_POSITIONS.SIDE_NORMAL_X;
 
-      // Symbol Name (Only for ALL COINS widget)
+      // Symbol Name (Only for ALL STOCKS widget)
       if (this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID) {
         ctx.fillStyle = t.textPrimary;
-        const name = getSymbolName(trade.symbolId).split('/')[0]; // Just show 'BTC' instead of 'BTC/IDR' to save space
+        const name = getSymbolName(trade.symbolId); // Just show the stock ticker
         ctx.fillText(name, this.x + COLUMN_POSITIONS.SYMBOL_WILDCARD_X, drawY);
         sideX = this.x + COLUMN_POSITIONS.SIDE_WILDCARD_X;
       }

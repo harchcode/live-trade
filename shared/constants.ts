@@ -46,22 +46,22 @@ export const SPARKLINE = {
   GLOW_END_HEX: "00"
 };
 
-export const BASE_COINS = [
-  "BTC",
-  "ETH",
-  "USDT",
-  "BNB",
-  "XRP",
-  "SOL",
-  "ADA",
-  "DOGE",
-  "TRX",
-  "LINK"
+export const BASE_STOCKS = [
+  "AAPL",
+  "MSFT",
+  "GOOGL",
+  "AMZN",
+  "TSLA",
+  "META",
+  "NVDA",
+  "NFLX",
+  "AMD",
+  "INTC"
 ];
 
 export function getSymbolName(id: number): string {
-  if (id < BASE_COINS.length) {
-    return `${BASE_COINS[id]}/IDR`;
+  if (id < BASE_STOCKS.length) {
+    return BASE_STOCKS[id];
   }
-  return `COIN${id}/IDR`;
+  return `STK${id}`;
 }
