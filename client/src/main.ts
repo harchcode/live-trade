@@ -244,6 +244,12 @@ symbolDropdown.addEventListener("mousedown", e => {
 
         // Subscribe new
         activeTargetWidget.symbolId = newId;
+        
+        // Auto-expand if converting to ALL COINS and currently too small
+        if (newId === 65535 && activeTargetWidget.width < 310) {
+          activeTargetWidget.width = 310;
+        }
+        
         wsManager.subscribe(newId, oldHandler);
         saveLayout();
       }

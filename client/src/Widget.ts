@@ -166,8 +166,10 @@ export class Widget {
     // Draw Title (Symbol)
     ctx.fillStyle = t.textPrimary;
     ctx.font = "bold 15px Inter, sans-serif";
+    ctx.textBaseline = "middle";
     const title = this.symbolId === 65535 ? "ALL COINS" : getSymbolName(this.symbolId);
-    ctx.fillText(title, this.x + 16, this.y + 22);
+    ctx.fillText(title, this.x + 16, this.y + headerHeight / 2);
+    ctx.textBaseline = "alphabetic"; // Reset to default for the rest of canvas
 
     // Draw close button 'x' at right side only if active
     if (isActive) {
@@ -213,8 +215,8 @@ export class Widget {
       if (this.symbolId === 65535) {
         ctx.fillStyle = t.textPrimary;
         const name = getSymbolName(trade.symbolId).split('/')[0]; // Just show 'BTC' instead of 'BTC/IDR' to save space
-        ctx.fillText(name, this.x + 85, drawY);
-        sideX = this.x + 135;
+        ctx.fillText(name, this.x + 95, drawY);
+        sideX = this.x + 155;
       }
 
       // Side

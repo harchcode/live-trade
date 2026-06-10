@@ -250,11 +250,13 @@ export class Engine {
         let newW = b.w;
         let newH = b.h;
 
-        if (this.resizeEdge.includes('e')) newW = Math.max(250, b.w + dx);
+        const minW = this.activeWidget.symbolId === 65535 ? 310 : 250;
+
+        if (this.resizeEdge.includes('e')) newW = Math.max(minW, b.w + dx);
         if (this.resizeEdge.includes('s')) newH = Math.max(200, b.h + dy);
         
         if (this.resizeEdge.includes('w')) {
-          newW = Math.max(250, b.w - dx);
+          newW = Math.max(minW, b.w - dx);
           newX = b.x + (b.w - newW); // Shift X to keep right edge pinned
         }
         if (this.resizeEdge.includes('n')) {
