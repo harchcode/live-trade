@@ -24,10 +24,10 @@ export class Engine {
   // Performance Monitoring
   private lastFpsTime = performance.now();
   private lastTradeCount = 0;
+  private lastBytesCount = 0;
   private frameCount = 0;
   private fps = 0;
   private fpsEl: HTMLElement | null = null;
-  private memEl: HTMLElement | null = null;
   private wsManager: WSManager | null = null;
 
   // DOM Overlays
@@ -47,7 +47,6 @@ export class Engine {
     this.ctx = this.canvas.getContext("2d")!;
 
     this.fpsEl = document.getElementById("fps-counter");
-    this.memEl = document.getElementById("mem-counter");
 
     // Initialize Singleton Scroll Overlay FIRST before resize triggers syncScrollOverlay
     this.scrollOverlay = document.createElement("div");
@@ -380,19 +379,32 @@ export class Engine {
           this.fps >= 50 ? "#00e676" : this.fps >= 30 ? "#ffb300" : "#ff1744";
       }
 
-      const perf = performance as Performance & {
-        memory?: { usedJSHeapSize: number };
-      };
-      if (this.memEl && perf.memory) {
-        const mb = (perf.memory.usedJSHeapSize / 1048576).toFixed(1);
-        this.memEl.innerText = `Mem: ${mb} MB`;
-      }
-
       if (this.wsManager) {
-        // Data usage
-        const kb = (this.wsManager.totalBytesReceived / 1024).toFixed(1);
+        // Memory
+        const memCounter = document.getElementById("mem-counter");
+        const perf = performance as Performance & {
+          memory?: { usedJSHeapSize: number };
+        };
+        if (memCounter && perf.memory) {
+          const used = Math.round(perf.memory.usedJSHeapSize / 1024 / 1024);
+          memCounter.innerText = `Mem: ${used} MB`;
+        }
+
+        // Data/s (Bandwidth)
+        const bytesPerSec =
+          this.wsManager.totalBytesReceived - this.lastBytesCount;
+        this.lastBytesCount = this.wsManager.totalBytesReceived;
+        const kbps = (bytesPerSec / 1024).toFixed(1);
+
         const dataCounter = document.getElementById("data-counter");
-        if (dataCounter) dataCounter.innerText = `Data: ${kb} KB`;
+        if (dataCounter) {
+          const isHigh =
+            bytesPerSec > APP_CONFIG.HIGH_BANDWIDTH_WARNING_KBPS * 1024;
+          dataCounter.innerText = `Data: ${kbps} KB/s${isHigh ? " ⚠️" : ""}`;
+          dataCounter.style.color = isHigh
+            ? "var(--color-sell, #ff1744)"
+            : "var(--text-secondary, #8b8b9e)";
+        }
 
         // Trades/s
         const tradesPerSec =
@@ -401,6 +413,18 @@ export class Engine {
 
         const tradeCounter = document.getElementById("trade-counter");
         if (tradeCounter) tradeCounter.innerText = `Trades/s: ${tradesPerSec}`;
+
+        const dataWarning = document.getElementById("data-warning");
+        if (dataWarning) {
+          const hasWildcard = this.widgets.some(
+            w => w.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID
+          );
+          if (hasWildcard || this.widgets.length >= 20 || tradesPerSec > 1000) {
+            dataWarning.style.display = "block";
+          } else {
+            dataWarning.style.display = "none";
+          }
+        }
       }
     }
 

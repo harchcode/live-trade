@@ -29,7 +29,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div id="fps-counter" style="color: var(--color-buy, #00e676); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
       <div id="trade-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Trades/s: 0</div>
       <div id="mem-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Mem: -- MB</div>
-      <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Data: 0 KB</div>
+      <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; transition: color 0.3s ease;">Data: 0 KB/s</div>
     </div>
 
     <!-- Bottom right footer -->
