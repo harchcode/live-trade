@@ -2,6 +2,7 @@ import "./style.css";
 import { WSManager } from "./WSManager";
 import { Engine } from "./Engine";
 import { Widget } from "./Widget";
+import { APP_CONFIG, WIDGET_LAYOUT } from "./constants";
 import type { Trade, TradeSubscriber } from "./types";
 import { getSymbolName } from "./types";
 import { applyThemeToDOM, toggleTheme } from "./theme";
@@ -54,7 +55,7 @@ document
   .getElementById("theme-toggle-btn")!
   .addEventListener("click", toggleTheme);
 
-const wsManager = new WSManager("ws://localhost:8080");
+const wsManager = new WSManager(APP_CONFIG.WS_URL);
 const engine = new Engine("main-canvas", "ui-layer");
 engine.setWSManager(wsManager);
 
@@ -79,7 +80,7 @@ const widgetHandlers = new Map<Widget, TradeSubscriber>();
 const allOption = document.createElement("div");
 allOption.innerText = "ALL COINS";
 allOption.classList.add("dropdown-item");
-allOption.setAttribute("data-id", "65535");
+allOption.setAttribute("data-id", APP_CONFIG.WILDCARD_SYMBOL_ID.toString());
 allOption.style.padding = "8px 12px";
 allOption.style.cursor = "pointer";
 allOption.style.color = "var(--text-primary, #fff)";
@@ -129,7 +130,7 @@ if (savedLayout) {
       engine.addWidget(widget);
       wsManager.subscribe(widget.symbolId, handler);
     }
-    widgetCounter.innerText = `${engine.getWidgets().length} / 50 Widgets`;
+    widgetCounter.innerText = `${engine.getWidgets().length} / ${APP_CONFIG.MAX_WIDGETS} Widgets`;
   } catch (e) {
     console.error("Failed to restore layout", e);
   }
@@ -140,7 +141,7 @@ engine.onLayoutChange = saveLayout;
 // Handle Add Widget
 addWidgetBtn.addEventListener("click", () => {
   const widgets = engine.getWidgets();
-  if (widgets.length >= 50) return;
+  if (widgets.length >= APP_CONFIG.MAX_WIDGETS) return;
 
   // Random default symbol from the top 10
   const defaultSymbolId = Math.floor(Math.random() * 10);
@@ -171,7 +172,7 @@ function clearAllWidgets() {
     }
     engine.removeWidget(widget);
   }
-  widgetCounter.innerText = `0 / 50 Widgets`;
+  widgetCounter.innerText = `0 / ${APP_CONFIG.MAX_WIDGETS} Widgets`;
   saveLayout();
 }
 
@@ -182,7 +183,7 @@ const fillWidgetsBtn = document.getElementById("fill-widgets-btn")!;
 fillWidgetsBtn.addEventListener("click", () => {
   clearAllWidgets();
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < APP_CONFIG.MAX_WIDGETS; i++) {
     const cols = Math.max(1, Math.floor(window.innerWidth / 360));
     const col = i % cols;
     const row = Math.floor(i / cols);
@@ -199,7 +200,7 @@ fillWidgetsBtn.addEventListener("click", () => {
     wsManager.subscribe(w.symbolId, handler);
   }
 
-  widgetCounter.innerText = `50 / 50 Widgets`;
+  widgetCounter.innerText = `${APP_CONFIG.MAX_WIDGETS} / ${APP_CONFIG.MAX_WIDGETS} Widgets`;
   saveLayout();
 });
 
@@ -248,8 +249,8 @@ symbolDropdown.addEventListener("mousedown", e => {
         activeTargetWidget.symbolId = newId;
         
         // Auto-expand if converting to ALL COINS and currently too small
-        if (newId === 65535 && activeTargetWidget.width < 310) {
-          activeTargetWidget.width = 310;
+        if (newId === APP_CONFIG.WILDCARD_SYMBOL_ID && activeTargetWidget.width < WIDGET_LAYOUT.MIN_WIDTH_WILDCARD) {
+          activeTargetWidget.width = WIDGET_LAYOUT.MIN_WIDTH_WILDCARD;
         }
         
         wsManager.subscribe(newId, oldHandler);

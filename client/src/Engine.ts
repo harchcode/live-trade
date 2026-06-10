@@ -1,5 +1,6 @@
 import { Widget } from "./Widget";
 import type { WSManager } from "./WSManager";
+import { APP_CONFIG, WIDGET_LAYOUT } from "./constants";
 import { getTheme } from "./theme";
 
 export class Engine {
@@ -159,15 +160,15 @@ export class Engine {
       return;
     }
 
-    const headerHeight = 44;
-    const inset = 8;
+    const headerHeight = WIDGET_LAYOUT.HEADER_HEIGHT;
+    const inset = WIDGET_LAYOUT.INSET;
     this.scrollOverlay.style.left = `${this.activeWidget.x + inset}px`;
     this.scrollOverlay.style.top = `${this.activeWidget.y + headerHeight}px`;
     this.scrollOverlay.style.width = `${this.activeWidget.width - (inset * 2)}px`;
     this.scrollOverlay.style.height = `${this.activeWidget.height - headerHeight - inset}px`; // Leave bottom space for handle
     this.scrollOverlay.style.display = "block";
 
-    const tradesHeight = 100 * 24 + 20; // Assume max 100 rows for consistent scrollbar thumb size
+    const tradesHeight = WIDGET_LAYOUT.MAX_SCROLL_ROWS * WIDGET_LAYOUT.ROW_HEIGHT + WIDGET_LAYOUT.HEADER_HEIGHT;
     const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
     if (this.scrollContent.style.height !== newHeightStr) {
       this.scrollContent.style.height = newHeightStr;
@@ -253,17 +254,17 @@ export class Engine {
         let newW = b.w;
         let newH = b.h;
 
-        const minW = this.activeWidget.symbolId === 65535 ? 310 : 250;
+        const minW = this.activeWidget.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? WIDGET_LAYOUT.MIN_WIDTH_WILDCARD : WIDGET_LAYOUT.MIN_WIDTH_NORMAL;
 
         if (this.resizeEdge.includes('e')) newW = Math.max(minW, b.w + dx);
-        if (this.resizeEdge.includes('s')) newH = Math.max(200, b.h + dy);
+        if (this.resizeEdge.includes('s')) newH = Math.max(WIDGET_LAYOUT.MIN_HEIGHT, b.h + dy);
         
         if (this.resizeEdge.includes('w')) {
           newW = Math.max(minW, b.w - dx);
           newX = b.x + (b.w - newW); // Shift X to keep right edge pinned
         }
         if (this.resizeEdge.includes('n')) {
-          newH = Math.max(200, b.h - dy);
+          newH = Math.max(WIDGET_LAYOUT.MIN_HEIGHT, b.h - dy);
           newY = b.y + (b.h - newH); // Shift Y to keep bottom edge pinned
         }
 
@@ -343,10 +344,13 @@ export class Engine {
   private loop = () => {
     const now = performance.now();
     this.frameCount++;
-    if (now - this.lastTime >= 1000) {
-      this.fps = this.frameCount;
+
+    if (now - this.lastFpsTime >= APP_CONFIG.FPS_THROTTLE_MS) {
+      this.fps = Math.round(
+        (this.frameCount * 1000) / (now - this.lastFpsTime)
+      );
       this.frameCount = 0;
-      this.lastTime = now;
+      this.lastFpsTime = now;
 
       if (this.fpsEl) {
         this.fpsEl.innerText = `FPS: ${this.fps}`;

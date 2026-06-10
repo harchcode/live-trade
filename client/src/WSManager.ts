@@ -1,4 +1,5 @@
 import type { Trade, TradeSubscriber } from "./types";
+import { APP_CONFIG } from "./constants";
 
 export class WSManager {
   private ws: WebSocket | null = null;
@@ -54,10 +55,8 @@ export class WSManager {
         }
 
         const view = new DataView(buffer);
-        const TRADE_SIZE = 27;
-
         // Trades buffer length must be a multiple of TRADE_SIZE
-        if (buffer.byteLength % TRADE_SIZE !== 0) {
+        if (buffer.byteLength % APP_CONFIG.TRADE_BYTE_SIZE !== 0) {
           console.warn(
             "[WS] Received malformed binary data length:",
             buffer.byteLength
@@ -65,7 +64,7 @@ export class WSManager {
           return;
         }
 
-        const numTrades = buffer.byteLength / TRADE_SIZE;
+        const numTrades = buffer.byteLength / APP_CONFIG.TRADE_BYTE_SIZE;
         this.totalTradesReceived += numTrades;
         let offset = 0;
 
@@ -115,7 +114,7 @@ export class WSManager {
             }
           }
           // Dispatch to "ALL COINS" wildcard listeners
-          const allListeners = this.listeners.get(65535);
+          const allListeners = this.listeners.get(APP_CONFIG.WILDCARD_SYMBOL_ID);
           if (allListeners) {
             for (const listener of allListeners) {
               listener(trades);

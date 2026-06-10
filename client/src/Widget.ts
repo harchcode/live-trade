@@ -1,8 +1,10 @@
 import { type Trade, getSymbolName } from "./types";
+import { APP_CONFIG, WIDGET_LAYOUT, COLUMN_POSITIONS, SPARKLINE } from "./constants";
 import { getTheme } from "./theme";
 
 export class Widget {
   public id: string;
+  public maxRows = WIDGET_LAYOUT.MAX_ROWS;
   public x: number;
   public y: number;
   public width: number;
@@ -80,7 +82,7 @@ export class Widget {
 
   public draw(ctx: CanvasRenderingContext2D, isActive: boolean = false) {
     const t = getTheme();
-    const headerHeight = 44;
+    const headerHeight = WIDGET_LAYOUT.HEADER_HEIGHT;
     
     // Setup for glassmorphism-like clean rendering
     ctx.save();
@@ -107,20 +109,20 @@ export class Widget {
 
     // Draw Mini Sparkline
     if (this.trades.length > 1) {
-      const numPoints = Math.min(50, this.trades.length);
+      const numPoints = Math.min(SPARKLINE.MAX_POINTS, this.trades.length);
       const points = this.trades.slice(0, numPoints).map(tr => tr.price).reverse();
       
       const maxP = Math.max(...points);
       const minP = Math.min(...points);
       const range = maxP - minP || 1; // Prevent divide by zero if flat
       
-      const startX = this.x + 110;
-      const endX = this.x + this.width - 40;
+      const startX = this.x + SPARKLINE.START_X_OFFSET;
+      const endX = this.x + this.width - SPARKLINE.END_X_PADDING;
       const graphW = endX - startX;
       
-      if (graphW > 20) { // Only draw if widget is wide enough
-        const graphH = 24;
-        const startY = this.y + 10;
+      if (graphW > SPARKLINE.MIN_WIDTH_TO_DRAW) { // Only draw if widget is wide enough
+        const graphH = SPARKLINE.HEIGHT;
+        const startY = this.y + SPARKLINE.START_Y_OFFSET;
         
         const isUp = points[points.length - 1] >= points[0];
         const lineColor = isUp ? t.colorBuy : t.colorSell;
@@ -136,8 +138,8 @@ export class Widget {
           else ctx.lineTo(px, py);
         }
         
-        // Stroke the softer line (33% opacity for a very subtle, non-distracting edge)
-        ctx.strokeStyle = lineColor + "55";
+        // Stroke the softer line
+        ctx.strokeStyle = lineColor + SPARKLINE.LINE_OPACITY_HEX;
         ctx.lineWidth = 1.5;
         ctx.lineJoin = "round";
         ctx.stroke();
@@ -148,8 +150,8 @@ export class Widget {
         ctx.closePath();
         
         const grad = ctx.createLinearGradient(0, startY, 0, startY + graphH);
-        grad.addColorStop(0, lineColor + "40"); // 25% opacity
-        grad.addColorStop(1, lineColor + "00"); // 0% opacity
+        grad.addColorStop(0, lineColor + SPARKLINE.GLOW_START_HEX);
+        grad.addColorStop(1, lineColor + SPARKLINE.GLOW_END_HEX);
         
         ctx.fillStyle = grad;
         ctx.fill();
@@ -167,8 +169,8 @@ export class Widget {
     ctx.fillStyle = t.textPrimary;
     ctx.font = "bold 15px Inter, sans-serif";
     ctx.textBaseline = "middle";
-    const title = this.symbolId === 65535 ? "ALL COINS" : getSymbolName(this.symbolId);
-    ctx.fillText(title, this.x + 16, this.y + headerHeight / 2);
+    const title = this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? "ALL COINS" : getSymbolName(this.symbolId);
+    ctx.fillText(title, this.x + COLUMN_POSITIONS.TIME_X, this.y + headerHeight / 2);
     ctx.textBaseline = "alphabetic"; // Reset to default for the rest of canvas
 
     // Draw close button 'x' at right side only if active
@@ -207,16 +209,16 @@ export class Widget {
 
       // Time
       ctx.fillStyle = t.textSecondary;
-      ctx.fillText(trade.timeStr || "", this.x + 16, drawY);
+      ctx.fillText(trade.timeStr || "", this.x + COLUMN_POSITIONS.TIME_X, drawY);
 
-      let sideX = this.x + 90;
+      let sideX = this.x + COLUMN_POSITIONS.SIDE_NORMAL_X;
 
       // Symbol Name (Only for ALL COINS widget)
-      if (this.symbolId === 65535) {
+      if (this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID) {
         ctx.fillStyle = t.textPrimary;
         const name = getSymbolName(trade.symbolId).split('/')[0]; // Just show 'BTC' instead of 'BTC/IDR' to save space
-        ctx.fillText(name, this.x + 95, drawY);
-        sideX = this.x + 155;
+        ctx.fillText(name, this.x + COLUMN_POSITIONS.SYMBOL_WILDCARD_X, drawY);
+        sideX = this.x + COLUMN_POSITIONS.SIDE_WILDCARD_X;
       }
 
       // Side
@@ -227,7 +229,7 @@ export class Widget {
       // Price
       ctx.fillStyle = t.textPrimary;
       ctx.textAlign = "right";
-      ctx.fillText(trade.priceStr || "", this.x + 245, drawY);
+      ctx.fillText(trade.priceStr || "", this.x + COLUMN_POSITIONS.PRICE_X, drawY);
 
       // Amount
       ctx.fillStyle = t.textSecondary;
