@@ -7,22 +7,23 @@ export const APP_CONFIG = {
 };
 
 export const WIDGET_LAYOUT = {
-  MIN_WIDTH_NORMAL: 250,
-  MIN_WIDTH_WILDCARD: 310,
+  MIN_WIDTH_NORMAL: 320,
+  MIN_WIDTH_WILDCARD: 380,
   MIN_HEIGHT: 200,
   HEADER_HEIGHT: 44,
   MAX_ROWS: 100,
   INSET: 8,
   MAX_SCROLL_ROWS: 100,
-  ROW_HEIGHT: 24,
+  ROW_HEIGHT: 24
 };
 
 export const COLUMN_POSITIONS = {
   TIME_X: 16,
-  SYMBOL_WILDCARD_X: 95,
+  SYMBOL_WILDCARD_X: 90,
   SIDE_NORMAL_X: 90,
-  SIDE_WILDCARD_X: 155,
-  PRICE_X: 245 // anchor for right alignment
+  SIDE_WILDCARD_X: 150,
+  PRICE_X: 245, // anchor for right alignment
+  PRICE_WILDCARD_X: 305
 };
 
 export const SPARKLINE = {
@@ -34,7 +35,7 @@ export const SPARKLINE = {
   MIN_WIDTH_TO_DRAW: 20,
   LINE_OPACITY_HEX: "55",
   GLOW_START_HEX: "40",
-  GLOW_END_HEX: "00",
+  GLOW_END_HEX: "00"
 };
 
 export const BASE_COINS = [

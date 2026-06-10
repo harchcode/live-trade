@@ -229,7 +229,8 @@ export class Widget {
       // Price
       ctx.fillStyle = t.textPrimary;
       ctx.textAlign = "right";
-      ctx.fillText(trade.priceStr || "", this.x + COLUMN_POSITIONS.PRICE_X, drawY);
+      const priceX = this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? COLUMN_POSITIONS.PRICE_WILDCARD_X : COLUMN_POSITIONS.PRICE_X;
+      ctx.fillText(trade.priceStr || "", this.x + priceX, drawY);
 
       // Amount
       ctx.fillStyle = t.textSecondary;
