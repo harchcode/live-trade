@@ -3,7 +3,7 @@ import { APP_CONFIG, getSymbolName } from "../shared/constants";
 
 // --- Configuration ---
 const CONFIG = {
-  PORT: 8080,
+  PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 8080,
   DATA_GEN_INTERVAL_MS: 50,
   THROTTLE_INTERVAL_MS: 100,
   MIN_TRADES_PER_TICK: 5,

@@ -1,7 +1,14 @@
+const IS_PROD =
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1";
+
 export const APP_CONFIG = {
   MAX_WIDGETS: 50,
   WILDCARD_SYMBOL_ID: 65535,
-  WS_URL: "ws://localhost:8080",
+  WS_URL: IS_PROD
+    ? "wss://hulahula-rt-demo.onrender.com"
+    : "ws://localhost:8080",
   TRADE_BYTE_SIZE: 27,
   FPS_THROTTLE_MS: 1000,
   HIGH_BANDWIDTH_WARNING_KBPS: 5
