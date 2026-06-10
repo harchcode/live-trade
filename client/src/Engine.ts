@@ -9,7 +9,7 @@ export class Engine {
   private widgets: Widget[] = [];
   private dpr: number = 1;
   private gridCache: HTMLCanvasElement | null = null;
-  private lastThemeName: string = '';
+  private lastThemeName: string = "";
 
   // Interactivity State
   private activeWidget: Widget | null = null;
@@ -24,12 +24,10 @@ export class Engine {
   // Performance Monitoring
   private lastFpsTime = performance.now();
   private lastTradeCount = 0;
-  private lastTime = performance.now();
   private frameCount = 0;
   private fps = 0;
   private fpsEl: HTMLElement | null = null;
   private memEl: HTMLElement | null = null;
-  private dataEl: HTMLElement | null = null;
   private wsManager: WSManager | null = null;
 
   // DOM Overlays
@@ -50,7 +48,6 @@ export class Engine {
 
     this.fpsEl = document.getElementById("fps-counter");
     this.memEl = document.getElementById("mem-counter");
-    this.dataEl = document.getElementById("data-counter");
 
     // Initialize Singleton Scroll Overlay FIRST before resize triggers syncScrollOverlay
     this.scrollOverlay = document.createElement("div");
@@ -107,7 +104,7 @@ export class Engine {
     if (!this.gridCache) {
       this.gridCache = document.createElement("canvas");
     }
-    
+
     // Scale cache canvas to match DPR for crisp rendering
     this.gridCache.width = width * this.dpr;
     this.gridCache.height = height * this.dpr;
@@ -163,11 +160,13 @@ export class Engine {
     const inset = WIDGET_LAYOUT.INSET;
     this.scrollOverlay.style.left = `${this.activeWidget.x + inset}px`;
     this.scrollOverlay.style.top = `${this.activeWidget.y + headerHeight}px`;
-    this.scrollOverlay.style.width = `${this.activeWidget.width - (inset * 2)}px`;
+    this.scrollOverlay.style.width = `${this.activeWidget.width - inset * 2}px`;
     this.scrollOverlay.style.height = `${this.activeWidget.height - headerHeight - inset}px`; // Leave bottom space for handle
     this.scrollOverlay.style.display = "block";
 
-    const tradesHeight = WIDGET_LAYOUT.MAX_SCROLL_ROWS * WIDGET_LAYOUT.ROW_HEIGHT + WIDGET_LAYOUT.HEADER_HEIGHT;
+    const tradesHeight =
+      WIDGET_LAYOUT.MAX_SCROLL_ROWS * WIDGET_LAYOUT.ROW_HEIGHT +
+      WIDGET_LAYOUT.HEADER_HEIGHT;
     const newHeightStr = `${Math.max(this.scrollOverlay.clientHeight, tradesHeight)}px`;
     if (this.scrollContent.style.height !== newHeightStr) {
       this.scrollContent.style.height = newHeightStr;
@@ -201,17 +200,28 @@ export class Engine {
         // Active widget interactions
         if (edge) {
           this.resizeEdge = edge;
-          
+
           const edgeCursorMap: Record<string, string> = {
-            'n': 'ns-resize', 's': 'ns-resize', 'e': 'ew-resize', 'w': 'ew-resize',
-            'nw': 'nwse-resize', 'se': 'nwse-resize', 'ne': 'nesw-resize', 'sw': 'nesw-resize'
+            n: "ns-resize",
+            s: "ns-resize",
+            e: "ew-resize",
+            w: "ew-resize",
+            nw: "nwse-resize",
+            se: "nwse-resize",
+            ne: "nesw-resize",
+            sw: "nesw-resize"
           };
           this.canvas.style.cursor = edgeCursorMap[edge];
-          
+
           this.dragStartX = x;
           this.dragStartY = y;
-          this.dragStartBounds = { x: widget.x, y: widget.y, w: widget.width, h: widget.height };
-          
+          this.dragStartBounds = {
+            x: widget.x,
+            y: widget.y,
+            w: widget.width,
+            h: widget.height
+          };
+
           this.scrollOverlay.style.display = "none";
           return;
         }
@@ -226,12 +236,12 @@ export class Engine {
           this.scrollOverlay.style.display = "none";
           return;
         }
-        
+
         // Hit the active widget body (e.g. bottom gap), do nothing
         return;
       }
     }
-    
+
     // Clicked background, clear active widget
     this.activeWidget = null;
     this.syncScrollOverlay();
@@ -253,16 +263,20 @@ export class Engine {
         let newW = b.w;
         let newH = b.h;
 
-        const minW = this.activeWidget.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? WIDGET_LAYOUT.MIN_WIDTH_WILDCARD : WIDGET_LAYOUT.MIN_WIDTH_NORMAL;
+        const minW =
+          this.activeWidget.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID
+            ? WIDGET_LAYOUT.MIN_WIDTH_WILDCARD
+            : WIDGET_LAYOUT.MIN_WIDTH_NORMAL;
 
-        if (this.resizeEdge.includes('e')) newW = Math.max(minW, b.w + dx);
-        if (this.resizeEdge.includes('s')) newH = Math.max(WIDGET_LAYOUT.MIN_HEIGHT, b.h + dy);
-        
-        if (this.resizeEdge.includes('w')) {
+        if (this.resizeEdge.includes("e")) newW = Math.max(minW, b.w + dx);
+        if (this.resizeEdge.includes("s"))
+          newH = Math.max(WIDGET_LAYOUT.MIN_HEIGHT, b.h + dy);
+
+        if (this.resizeEdge.includes("w")) {
           newW = Math.max(minW, b.w - dx);
           newX = b.x + (b.w - newW); // Shift X to keep right edge pinned
         }
-        if (this.resizeEdge.includes('n')) {
+        if (this.resizeEdge.includes("n")) {
           newH = Math.max(WIDGET_LAYOUT.MIN_HEIGHT, b.h - dy);
           newY = b.y + (b.h - newH); // Shift Y to keep bottom edge pinned
         }
@@ -282,16 +296,25 @@ export class Engine {
     for (let i = this.widgets.length - 1; i >= 0; i--) {
       const widget = this.widgets[i];
       const edge = widget.getHitEdge(x, y);
-      
+
       if (widget.isHit(x, y) || edge) {
         if (widget === this.activeWidget) {
           if (edge) {
             const edgeCursorMap: Record<string, string> = {
-              'n': 'ns-resize', 's': 'ns-resize', 'e': 'ew-resize', 'w': 'ew-resize',
-              'nw': 'nwse-resize', 'se': 'nwse-resize', 'ne': 'nesw-resize', 'sw': 'nesw-resize'
+              n: "ns-resize",
+              s: "ns-resize",
+              e: "ew-resize",
+              w: "ew-resize",
+              nw: "nwse-resize",
+              se: "nwse-resize",
+              ne: "nesw-resize",
+              sw: "nesw-resize"
             };
             cursor = edgeCursorMap[edge];
-          } else if (widget.isHitHeaderClose(x, y) || widget.isHitHeaderSymbol(x, y)) {
+          } else if (
+            widget.isHitHeaderClose(x, y) ||
+            widget.isHitHeaderSymbol(x, y)
+          ) {
             cursor = "pointer";
           } else if (widget.isHitHeader(x, y)) {
             cursor = "grab";
@@ -372,7 +395,8 @@ export class Engine {
         if (dataCounter) dataCounter.innerText = `Data: ${kb} KB`;
 
         // Trades/s
-        const tradesPerSec = this.wsManager.totalTradesReceived - this.lastTradeCount;
+        const tradesPerSec =
+          this.wsManager.totalTradesReceived - this.lastTradeCount;
         this.lastTradeCount = this.wsManager.totalTradesReceived;
 
         const tradeCounter = document.getElementById("trade-counter");
@@ -383,7 +407,7 @@ export class Engine {
     const rect = this.canvas.getBoundingClientRect();
 
     // Check for theme changes to regenerate cache
-    const currentThemeName = localStorage.getItem('theme') || 'dark';
+    const currentThemeName = localStorage.getItem("theme") || "dark";
     if (this.lastThemeName !== currentThemeName) {
       this.lastThemeName = currentThemeName;
       this.updateGridCache(rect.width, rect.height);

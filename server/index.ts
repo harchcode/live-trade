@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws";
+import { APP_CONFIG, getSymbolName } from "../shared/constants";
 
 // --- Configuration ---
 const CONFIG = {
@@ -19,20 +20,8 @@ const wss = new WebSocketServer({ port: CONFIG.PORT });
 export const SYMBOL_MAP: Record<string, number> = {};
 export const SYMBOL_KEYS: string[] = [];
 
-const baseCoins = [
-  "BTC",
-  "ETH",
-  "USDT",
-  "BNB",
-  "XRP",
-  "SOL",
-  "ADA",
-  "DOGE",
-  "TRX",
-  "LINK"
-];
 for (let i = 0; i < CONFIG.NUM_SYMBOLS; i++) {
-  const symbol = i < baseCoins.length ? `${baseCoins[i]}/IDR` : `COIN${i}/IDR`;
+  const symbol = getSymbolName(i);
   SYMBOL_MAP[symbol] = i;
   SYMBOL_KEYS.push(symbol);
 }
@@ -98,7 +87,11 @@ setInterval(() => {
     const symbolId = Math.floor(Math.random() * CONFIG.NUM_SYMBOLS);
 
     // Optimization: Skip allocating memory for this trade if nobody is listening to it specifically AND nobody is listening to the wildcard (65535)
-    if (!activeSubscriptions.has(symbolId) && !activeSubscriptions.has(65535)) continue;
+    if (
+      !activeSubscriptions.has(symbolId) &&
+      !activeSubscriptions.has(APP_CONFIG.WILDCARD_SYMBOL_ID)
+    )
+      continue;
 
     tradeQueue.push({
       timestamp: BigInt(Date.now()),
@@ -123,8 +116,10 @@ setInterval(() => {
     if (extClient.readyState !== WebSocket.OPEN) return;
 
     // Filter trades for this specific client's subscriptions, or clients subscribed to ALL (65535)
-    const clientTrades = tradesToProcess.filter(t =>
-      extClient.subscriptions.has(t.symbolId) || extClient.subscriptions.has(65535)
+    const clientTrades = tradesToProcess.filter(
+      t =>
+        extClient.subscriptions.has(t.symbolId) ||
+        extClient.subscriptions.has(APP_CONFIG.WILDCARD_SYMBOL_ID)
     );
 
     if (clientTrades.length === 0) return;

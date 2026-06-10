@@ -79,7 +79,7 @@ export class WSManager {
           offset += 8;
           const amount = view.getFloat64(offset, true);
           offset += 8;
-          
+
           const timeStr = new Date(Number(timestamp)).toLocaleTimeString([], {
             hour12: false,
             hour: "2-digit",
@@ -95,14 +95,23 @@ export class WSManager {
             maximumFractionDigits: 4
           });
 
-          const trade: Trade = { timestamp, symbolId, side, price, amount, timeStr, priceStr, amountStr };
-          
+          const trade: Trade = {
+            timestamp,
+            symbolId,
+            side,
+            price,
+            amount,
+            timeStr,
+            priceStr,
+            amountStr
+          };
+
           if (!tradesBySymbol.has(symbolId)) {
             tradesBySymbol.set(symbolId, []);
           }
           tradesBySymbol.get(symbolId)!.push(trade);
         }
-        
+
         for (const [symbolId, trades] of tradesBySymbol.entries()) {
           // Dispatch to specific symbol listeners
           const symbolListeners = this.listeners.get(symbolId);
@@ -112,7 +121,9 @@ export class WSManager {
             }
           }
           // Dispatch to "ALL COINS" wildcard listeners
-          const allListeners = this.listeners.get(APP_CONFIG.WILDCARD_SYMBOL_ID);
+          const allListeners = this.listeners.get(
+            APP_CONFIG.WILDCARD_SYMBOL_ID
+          );
           if (allListeners) {
             for (const listener of allListeners) {
               listener(trades);
@@ -165,15 +176,6 @@ export class WSManager {
       if (symbolListeners.size === 0) {
         this.activeSubscriptions.delete(symbolId);
         this.sendSubscriptionCommand(1, symbolId);
-      }
-    }
-  }
-
-  private dispatchTrades(symbolId: number, trades: Trade[]) {
-    const symbolListeners = this.listeners.get(symbolId);
-    if (symbolListeners) {
-      for (const listener of symbolListeners) {
-        listener(trades);
       }
     }
   }
