@@ -1,8 +1,8 @@
 # Live Trade Visualizer
 
-A hyper-optimized, real-time cryptocurrency trading visualizer built with Vanilla TypeScript, Canvas API, and Node.js WebSockets.
+A hyper-optimized, real-time running trade built with Vanilla TypeScript, Canvas API, and Node.js WebSockets.
 
-This project demonstrates how to handle massive firehoses of incoming network data and render dozens of complex UI widgets simultaneously without crashing the browser thread.
+This project demonstrates how to handle massive firehoses of incoming network data and render dozens of UI widgets simultaneously without crashing the browser.
 
 ## Architecture
 
