@@ -1,0 +1,68 @@
+const IS_PROD =
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1";
+
+export const APP_CONFIG = {
+  MAX_WIDGETS: 50,
+  WILDCARD_SYMBOL_ID: 65535,
+  WS_URL: IS_PROD
+    ? "wss://hulahula-rt-demo.onrender.com"
+    : "ws://localhost:8080",
+  TRADE_BYTE_SIZE: 27,
+  FPS_THROTTLE_MS: 1000,
+  HIGH_BANDWIDTH_WARNING_KBPS: 5
+};
+
+export const WIDGET_LAYOUT = {
+  MIN_WIDTH_NORMAL: 320,
+  MIN_WIDTH_WILDCARD: 380,
+  MIN_HEIGHT: 200,
+  HEADER_HEIGHT: 44,
+  MAX_ROWS: 100,
+  INSET: 8,
+  MAX_SCROLL_ROWS: 100,
+  ROW_HEIGHT: 24
+};
+
+export const COLUMN_POSITIONS = {
+  TIME_X: 16,
+  SYMBOL_WILDCARD_X: 90,
+  SIDE_NORMAL_X: 90,
+  SIDE_WILDCARD_X: 150,
+  PRICE_X: 245, // anchor for right alignment
+  PRICE_WILDCARD_X: 305
+};
+
+export const SPARKLINE = {
+  MAX_POINTS: 50,
+  HEIGHT: 24,
+  START_Y_OFFSET: 10,
+  START_X_OFFSET: 110,
+  WILDCARD_START_X_OFFSET: 135,
+  END_X_PADDING: 40,
+  MIN_WIDTH_TO_DRAW: 20,
+  LINE_OPACITY_HEX: "55",
+  GLOW_START_HEX: "40",
+  GLOW_END_HEX: "00"
+};
+
+export const BASE_STOCKS = [
+  "AAPL",
+  "MSFT",
+  "GOOGL",
+  "AMZN",
+  "TSLA",
+  "META",
+  "NVDA",
+  "NFLX",
+  "AMD",
+  "INTC"
+];
+
+export function getSymbolName(id: number): string {
+  if (id < BASE_STOCKS.length) {
+    return BASE_STOCKS[id];
+  }
+  return `STK${id}`;
+}
