@@ -116,7 +116,8 @@ export class Widget {
       const minP = Math.min(...points);
       const range = maxP - minP || 1; // Prevent divide by zero if flat
       
-      const startX = this.x + SPARKLINE.START_X_OFFSET;
+      const startXOffset = this.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID ? SPARKLINE.WILDCARD_START_X_OFFSET : SPARKLINE.START_X_OFFSET;
+      const startX = this.x + startXOffset;
       const endX = this.x + this.width - SPARKLINE.END_X_PADDING;
       const graphW = endX - startX;
       
