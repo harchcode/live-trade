@@ -23,7 +23,6 @@ export class Engine {
 
   // Performance Monitoring
   private lastFpsTime = performance.now();
-  private lastMsgCount = 0;
   private lastTradeCount = 0;
   private lastTime = performance.now();
   private frameCount = 0;
@@ -372,14 +371,9 @@ export class Engine {
         const dataCounter = document.getElementById("data-counter");
         if (dataCounter) dataCounter.innerText = `Data: ${kb} KB`;
 
-        // Msg/s & Trades/s
-        const msgPerSec = this.wsManager.totalMessagesReceived - this.lastMsgCount;
+        // Trades/s
         const tradesPerSec = this.wsManager.totalTradesReceived - this.lastTradeCount;
-        this.lastMsgCount = this.wsManager.totalMessagesReceived;
         this.lastTradeCount = this.wsManager.totalTradesReceived;
-
-        const msgCounter = document.getElementById("msg-counter");
-        if (msgCounter) msgCounter.innerText = `Msg/s: ${msgPerSec}`;
 
         const tradeCounter = document.getElementById("trade-counter");
         if (tradeCounter) tradeCounter.innerText = `Trades/s: ${tradesPerSec}`;

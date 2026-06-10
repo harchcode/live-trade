@@ -15,7 +15,6 @@ export class WSManager {
   private listeners = new Map<number, Set<TradeSubscriber>>();
 
   public totalBytesReceived = 0;
-  public totalMessagesReceived = 0;
   public totalTradesReceived = 0;
   public onStatusChange?: (status: "connected" | "reconnecting") => void;
 
@@ -46,7 +45,6 @@ export class WSManager {
       if (event.data instanceof ArrayBuffer) {
         const buffer = event.data;
         this.totalBytesReceived += buffer.byteLength;
-        this.totalMessagesReceived++;
 
         // Check if it's a manual Pong (1 byte, Action = 3)
         if (buffer.byteLength === 1) {
