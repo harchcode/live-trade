@@ -45,8 +45,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </a>
     </div>
 
-    <!-- Server Boot Warning -->
-    <div id="server-boot-warning" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--hud-bg, rgba(30, 30, 35, 0.9)); border: 1px solid var(--border, rgba(255,255,255,0.1)); padding: 25px 40px; border-radius: 16px; color: var(--text-primary, #fff); font-family: Inter, sans-serif; text-align: center; z-index: 1000; backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px;">
+    <!-- Server Boot Warning (Hidden by default to prevent flicker on fast connections) -->
+    <div id="server-boot-warning" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--hud-bg, rgba(30, 30, 35, 0.9)); border: 1px solid var(--border, rgba(255,255,255,0.1)); padding: 25px 40px; border-radius: 16px; color: var(--text-primary, #fff); font-family: Inter, sans-serif; text-align: center; z-index: 1000; backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); flex-direction: column; align-items: center; gap: 15px;">
       <div style="width: 32px; height: 32px; border: 3px solid var(--border, rgba(255,255,255,0.1)); border-top-color: var(--color-buy, #00e676); border-radius: 50%; animation: spin 1s linear infinite;"></div>
       <div style="font-weight: 600; font-size: 18px;">☕ Waking up the server...</div>
       <div style="color: var(--text-secondary, #8b8b9e); font-size: 14px; line-height: 1.5;">I am cheap, I use a free server, so it needs ~60 seconds to boot up! 😅<br/>Please be patient!</div>
@@ -72,6 +72,13 @@ const wsStatus = document.getElementById("ws-status")!;
 const bootWarning = document.getElementById("server-boot-warning")!;
 
 let hasConnectedOnce = false;
+
+// Prevent split-second flicker: Only show the giant boot warning if we haven't connected within 1.5 seconds
+setTimeout(() => {
+  if (!hasConnectedOnce) {
+    bootWarning.style.display = "flex";
+  }
+}, 1500);
 
 wsManager.onStatusChange = status => {
   if (status === "connected") {
