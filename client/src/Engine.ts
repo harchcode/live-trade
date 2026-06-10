@@ -367,63 +367,54 @@ export class Engine {
     this.frameCount++;
 
     if (now - this.lastFpsTime >= APP_CONFIG.FPS_THROTTLE_MS) {
-      this.fps = Math.round(
-        (this.frameCount * 1000) / (now - this.lastFpsTime)
-      );
-      this.frameCount = 0;
-      this.lastFpsTime = now;
+      const elapsedMs = now - this.lastFpsTime;
 
-      if (this.fpsEl) {
-        this.fpsEl.innerText = `FPS: ${this.fps}`;
-        this.fpsEl.style.color =
-          this.fps >= 50 ? "#00e676" : this.fps >= 30 ? "#ffb300" : "#ff1744";
-      }
+      if (elapsedMs > APP_CONFIG.FPS_THROTTLE_MS * 2) {
+        // Tab was asleep. Reset baselines to prevent a massive catch-up spike.
+        this.frameCount = 0;
+        this.lastFpsTime = now;
+        if (this.wsManager) {
+          this.lastBytesCount = this.wsManager.totalBytesReceived;
+          this.lastTradeCount = this.wsManager.totalTradesReceived;
+        }
+      } else {
+        const elapsedSec = elapsedMs / 1000;
+        this.fps = Math.round(this.frameCount / elapsedSec);
+        this.frameCount = 0;
+        this.lastFpsTime = now;
 
-      if (this.wsManager) {
-        // Memory
-        const memCounter = document.getElementById("mem-counter");
-        const perf = performance as Performance & {
-          memory?: { usedJSHeapSize: number };
-        };
-        if (memCounter && perf.memory) {
-          const used = Math.round(perf.memory.usedJSHeapSize / 1024 / 1024);
-          memCounter.innerText = `Mem: ${used} MB`;
+        if (this.fpsEl) {
+          this.fpsEl.innerText = `FPS: ${this.fps}`;
+          this.fpsEl.style.color = this.fps >= 50 ? "#00e676" : this.fps >= 30 ? "#ffb300" : "#ff1744";
         }
 
-        // Data/s (Bandwidth)
-        const bytesPerSec =
-          this.wsManager.totalBytesReceived - this.lastBytesCount;
-        this.lastBytesCount = this.wsManager.totalBytesReceived;
-        const kbps = (bytesPerSec / 1024).toFixed(1);
-
-        const dataCounter = document.getElementById("data-counter");
-        if (dataCounter) {
-          const isHigh =
-            bytesPerSec > APP_CONFIG.HIGH_BANDWIDTH_WARNING_KBPS * 1024;
-          dataCounter.innerText = `Data: ${kbps} KB/s${isHigh ? " ⚠️" : ""}`;
-          dataCounter.style.color = isHigh
-            ? "var(--color-sell, #ff1744)"
-            : "var(--text-secondary, #8b8b9e)";
-        }
-
-        // Trades/s
-        const tradesPerSec =
-          this.wsManager.totalTradesReceived - this.lastTradeCount;
-        this.lastTradeCount = this.wsManager.totalTradesReceived;
-
-        const tradeCounter = document.getElementById("trade-counter");
-        if (tradeCounter) tradeCounter.innerText = `Trades/s: ${tradesPerSec}`;
-
-        const dataWarning = document.getElementById("data-warning");
-        if (dataWarning) {
-          const hasWildcard = this.widgets.some(
-            w => w.symbolId === APP_CONFIG.WILDCARD_SYMBOL_ID
-          );
-          if (hasWildcard || this.widgets.length >= 20 || tradesPerSec > 1000) {
-            dataWarning.style.display = "block";
-          } else {
-            dataWarning.style.display = "none";
+        if (this.wsManager) {
+          // Memory
+          const memCounter = document.getElementById("mem-counter");
+          const perf = performance as Performance & { memory?: { usedJSHeapSize: number }; };
+          if (memCounter && perf.memory) {
+            const used = Math.round(perf.memory.usedJSHeapSize / 1024 / 1024);
+            memCounter.innerText = `Mem: ${used} MB`;
           }
+
+          // Data/s (Bandwidth)
+          const bytesPerSec = (this.wsManager.totalBytesReceived - this.lastBytesCount) / elapsedSec;
+          this.lastBytesCount = this.wsManager.totalBytesReceived;
+          const kbps = (bytesPerSec / 1024).toFixed(1);
+          
+          const dataCounter = document.getElementById("data-counter");
+          if (dataCounter) {
+            const isHigh = bytesPerSec > APP_CONFIG.HIGH_BANDWIDTH_WARNING_KBPS * 1024;
+            dataCounter.innerText = `Data: ${kbps} KB/s${isHigh ? " ⚠️" : ""}`;
+            dataCounter.style.color = isHigh ? "var(--color-sell, #ff1744)" : "var(--text-secondary, #8b8b9e)";
+          }
+
+          // Trades/s
+          const tradesPerSec = Math.round((this.wsManager.totalTradesReceived - this.lastTradeCount) / elapsedSec);
+          this.lastTradeCount = this.wsManager.totalTradesReceived;
+
+          const tradeCounter = document.getElementById("trade-counter");
+          if (tradeCounter) tradeCounter.innerText = `Trades/s: ${tradesPerSec}`;
         }
       }
     }
