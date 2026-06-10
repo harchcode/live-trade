@@ -14,6 +14,8 @@ export class WSManager {
   private listeners = new Map<number, Set<TradeSubscriber>>();
 
   public totalBytesReceived = 0;
+  public totalMessagesReceived = 0;
+  public totalTradesReceived = 0;
   public onStatusChange?: (status: "connected" | "reconnecting") => void;
 
   constructor(url: string) {
@@ -43,6 +45,7 @@ export class WSManager {
       if (event.data instanceof ArrayBuffer) {
         const buffer = event.data;
         this.totalBytesReceived += buffer.byteLength;
+        this.totalMessagesReceived++;
 
         // Check if it's a manual Pong (1 byte, Action = 3)
         if (buffer.byteLength === 1) {
@@ -63,6 +66,7 @@ export class WSManager {
         }
 
         const numTrades = buffer.byteLength / TRADE_SIZE;
+        this.totalTradesReceived += numTrades;
         let offset = 0;
 
         const tradesBySymbol = new Map<number, Trade[]>();

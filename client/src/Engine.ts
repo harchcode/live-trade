@@ -21,6 +21,9 @@ export class Engine {
   private dragStartY = 0;
 
   // Performance Monitoring
+  private lastFpsTime = performance.now();
+  private lastMsgCount = 0;
+  private lastTradeCount = 0;
   private lastTime = performance.now();
   private frameCount = 0;
   private fps = 0;
@@ -359,15 +362,23 @@ export class Engine {
         this.memEl.innerText = `Mem: ${mb} MB`;
       }
 
-      if (this.dataEl && this.wsManager) {
-        const bytes = this.wsManager.totalBytesReceived;
-        if (bytes > 1048576) {
-          const mb = (bytes / 1048576).toFixed(2);
-          this.dataEl.innerText = `Data: ${mb} MB`;
-        } else {
-          const kb = (bytes / 1024).toFixed(1);
-          this.dataEl.innerText = `Data: ${kb} KB`;
-        }
+      if (this.wsManager) {
+        // Data usage
+        const kb = (this.wsManager.totalBytesReceived / 1024).toFixed(1);
+        const dataCounter = document.getElementById("data-counter");
+        if (dataCounter) dataCounter.innerText = `Data: ${kb} KB`;
+
+        // Msg/s & Trades/s
+        const msgPerSec = this.wsManager.totalMessagesReceived - this.lastMsgCount;
+        const tradesPerSec = this.wsManager.totalTradesReceived - this.lastTradeCount;
+        this.lastMsgCount = this.wsManager.totalMessagesReceived;
+        this.lastTradeCount = this.wsManager.totalTradesReceived;
+
+        const msgCounter = document.getElementById("msg-counter");
+        if (msgCounter) msgCounter.innerText = `Msg/s: ${msgPerSec}`;
+
+        const tradeCounter = document.getElementById("trade-counter");
+        if (tradeCounter) tradeCounter.innerText = `Trades/s: ${tradesPerSec}`;
       }
     }
 

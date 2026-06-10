@@ -97,8 +97,8 @@ setInterval(() => {
   for (let i = 0; i < totalTradesThisTick; i++) {
     const symbolId = Math.floor(Math.random() * CONFIG.NUM_SYMBOLS);
 
-    // Optimization: Skip allocating memory for this trade if nobody is listening
-    if (!activeSubscriptions.has(symbolId)) continue;
+    // Optimization: Skip allocating memory for this trade if nobody is listening to it specifically AND nobody is listening to the wildcard (65535)
+    if (!activeSubscriptions.has(symbolId) && !activeSubscriptions.has(65535)) continue;
 
     tradeQueue.push({
       timestamp: BigInt(Date.now()),

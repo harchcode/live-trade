@@ -26,6 +26,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div style="position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; gap: 15px; align-items: center; height: 36px;">
       <div id="ws-status" style="color: var(--color-sell, #ff1744); font-family: Inter, sans-serif; font-size: 14px; font-weight: 600;">🔴 Connecting...</div>
       <div id="fps-counter" style="color: var(--color-buy, #00e676); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px; font-weight: bold;">FPS: --</div>
+      <div id="msg-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Msg/s: 0</div>
+      <div id="trade-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Trades/s: 0</div>
       <div id="mem-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Mem: -- MB</div>
       <div id="data-counter" style="color: var(--text-secondary, #8b8b9e); font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 13px;">Data: 0 KB</div>
     </div>
