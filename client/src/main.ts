@@ -8,8 +8,11 @@ import { getSymbolName } from "./types";
 import { applyThemeToDOM, toggleTheme } from "./theme";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div style="width: 100vw; height: 100vh; overflow: hidden; position: relative;">
-    <canvas id="main-canvas" style="display: block; position: absolute; z-index: 1;"></canvas>
+  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg-color, #0f0f13);">
+    <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <canvas id="main-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
     
     <!-- Transparent UI layer for scrolling overlay divs -->
     <div id="ui-layer" style="position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; z-index: 2;"></div>
@@ -42,6 +45,13 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </a>
     </div>
 
+    <!-- Server Boot Warning -->
+    <div id="server-boot-warning" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--hud-bg, rgba(30, 30, 35, 0.9)); border: 1px solid var(--border, rgba(255,255,255,0.1)); padding: 25px 40px; border-radius: 16px; color: var(--text-primary, #fff); font-family: Inter, sans-serif; text-align: center; z-index: 1000; backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px;">
+      <div style="width: 32px; height: 32px; border: 3px solid var(--border, rgba(255,255,255,0.1)); border-top-color: var(--color-buy, #00e676); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <div style="font-weight: 600; font-size: 18px;">☕ Waking up the server...</div>
+      <div style="color: var(--text-secondary, #8b8b9e); font-size: 14px; line-height: 1.5;">I am cheap, I use a free server, so it needs ~60 seconds to boot up! 😅<br/>Please be patient!</div>
+    </div>
+
     <!-- Dropdowns (Hidden by default) -->
     <div id="symbol-dropdown" class="dropdown" style="display: none; position: absolute; z-index: 20; background: var(--dropdown-bg, #1e1e25); border: 1px solid var(--border, rgba(255,255,255,0.1)); border-radius: 6px; padding: 4px; max-height: 250px; overflow-y: auto; box-shadow: 0 8px 16px var(--shadow, rgba(0,0,0,0.5));">
       <!-- Options injected by JS -->
@@ -59,13 +69,25 @@ const engine = new Engine("main-canvas", "ui-layer");
 engine.setWSManager(wsManager);
 
 const wsStatus = document.getElementById("ws-status")!;
+const bootWarning = document.getElementById("server-boot-warning")!;
+
+let hasConnectedOnce = false;
+
 wsManager.onStatusChange = status => {
   if (status === "connected") {
+    hasConnectedOnce = true;
     wsStatus.innerText = "🟢 Connected";
     wsStatus.style.color = "var(--color-buy, #00e676)";
+    bootWarning.style.display = "none";
   } else {
     wsStatus.innerText = "🔴 Reconnecting...";
     wsStatus.style.color = "var(--color-sell, #ff1744)";
+
+    // Only show the massive "Server Booting" popup if we've NEVER connected before.
+    // If we lose connection mid-way, just rely on the HUD icon.
+    if (!hasConnectedOnce) {
+      bootWarning.style.display = "flex";
+    }
   }
 };
 
@@ -84,8 +106,16 @@ allOption.style.padding = "8px 12px";
 allOption.style.cursor = "pointer";
 allOption.style.color = "var(--text-primary, #fff)";
 allOption.style.fontWeight = "bold";
-allOption.addEventListener("mouseenter", () => allOption.style.background = "var(--dropdown-hover, rgba(255, 255, 255, 0.1))");
-allOption.addEventListener("mouseleave", () => allOption.style.background = "transparent");
+allOption.addEventListener(
+  "mouseenter",
+  () =>
+    (allOption.style.background =
+      "var(--dropdown-hover, rgba(255, 255, 255, 0.1))")
+);
+allOption.addEventListener(
+  "mouseleave",
+  () => (allOption.style.background = "transparent")
+);
 symbolDropdown.appendChild(allOption);
 
 let dropdownHtml = "";
@@ -246,12 +276,15 @@ symbolDropdown.addEventListener("mousedown", e => {
 
         // Subscribe new
         activeTargetWidget.symbolId = newId;
-        
+
         // Auto-expand if converting to ALL STOCKS and currently too small
-        if (newId === APP_CONFIG.WILDCARD_SYMBOL_ID && activeTargetWidget.width < WIDGET_LAYOUT.MIN_WIDTH_WILDCARD) {
+        if (
+          newId === APP_CONFIG.WILDCARD_SYMBOL_ID &&
+          activeTargetWidget.width < WIDGET_LAYOUT.MIN_WIDTH_WILDCARD
+        ) {
           activeTargetWidget.width = WIDGET_LAYOUT.MIN_WIDTH_WILDCARD;
         }
-        
+
         wsManager.subscribe(newId, oldHandler);
         saveLayout();
       }
